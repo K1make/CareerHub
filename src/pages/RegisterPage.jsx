@@ -1,12 +1,13 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { GraduationCap, ArrowLeft, Eye, EyeOff, CheckCircle, Sparkles } from 'lucide-react';
+import { GraduationCap, ArrowLeft, Eye, EyeOff, CheckCircle, Sparkles, ChevronDown } from 'lucide-react';
 
 function StudentRegister() {
   const navigate = useNavigate();
   const [step, setStep] = useState(1);
   const [showPass, setShowPass] = useState(false);
   const [form, setForm] = useState({ university: 'МУИТ (IITU)', studentId: '', name: '', email: '', password: '' });
+  const [showDropdown, setShowDropdown] = useState(false);
 
   const universities = ['МУИТ (IITU)', 'КБТУ', 'НУ (NU)', 'КазНУ', 'SDU', 'AITU'];
 
@@ -71,17 +72,34 @@ function StudentRegister() {
                 <div className="space-y-3">
                   <label className="block text-xs font-semibold text-on-surface-variant uppercase tracking-wider">Университет</label>
                   <div className="relative">
-                    <select
-                      id="uni-select"
-                      className="input-field appearance-none pr-10"
-                      value={form.university}
-                      onChange={e => setForm(f => ({ ...f, university: e.target.value }))}
+                    <button
+                      type="button"
+                      id="uni-select-btn"
+                      className="input-field w-full text-left flex items-center justify-between"
+                      onClick={() => setShowDropdown(!showDropdown)}
                     >
-                      {universities.map(u => <option key={u} value={u}>{u}</option>)}
-                    </select>
-                    <div className="absolute inset-y-0 right-0 flex items-center px-4 pointer-events-none text-outline">
-                      <svg className="w-4 h-4 fill-current" viewBox="0 0 20 20"><path d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"/></svg>
-                    </div>
+                      <span className="text-on-surface truncate">{form.university}</span>
+                      <ChevronDown className={`w-4 h-4 transition-transform duration-200 ${showDropdown ? 'rotate-180 text-primary' : 'text-outline'} flex-shrink-0`} />
+                    </button>
+                    {showDropdown && (
+                      <div className="absolute top-full pt-1 left-0 w-full z-20 animate-fade-in">
+                        <div className="bg-[#1a1b26]/90 backdrop-blur-xl border border-outline-variant/60 rounded-xl shadow-glass-lg overflow-hidden flex flex-col py-1">
+                          {universities.map(u => (
+                            <button
+                              key={u}
+                              type="button"
+                              className={`w-full text-left px-4 py-2.5 text-sm transition-colors hover:bg-white/10 ${form.university === u ? 'text-primary bg-primary-container/15 font-semibold' : 'text-on-surface'}`}
+                              onClick={() => {
+                                setForm(f => ({ ...f, university: u }));
+                                setShowDropdown(false);
+                              }}
+                            >
+                              {u}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </div>
 
