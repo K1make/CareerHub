@@ -1,0 +1,163 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  * {
+    box-sizing: border-box;
+  }
+
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    @apply bg-background text-on-surface font-inter antialiased;
+    min-height: 100vh;
+  }
+
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+
+  ::-webkit-scrollbar-track {
+    @apply bg-surface-container-lowest;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    @apply bg-outline-variant rounded-full;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    @apply bg-outline;
+  }
+}
+
+@layer components {
+  /* Glass card */
+  .glass-card {
+    @apply bg-surface-container-low border border-outline-variant rounded-lg shadow-glass;
+    background: rgba(27, 27, 36, 0.7);
+    backdrop-filter: blur(12px);
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+  }
+
+  .glass-card-high {
+    @apply bg-surface-container border border-outline-variant rounded-lg shadow-glass-lg;
+    background: rgba(31, 31, 40, 0.85);
+    backdrop-filter: blur(16px);
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+  }
+
+  /* Buttons */
+  .btn-primary {
+    @apply inline-flex items-center gap-2 px-6 py-3 bg-primary-container text-white font-semibold rounded-lg transition-all duration-200;
+    @apply hover:brightness-110 hover:shadow-glow active:scale-95;
+    @apply focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-background;
+  }
+
+  .btn-secondary {
+    @apply inline-flex items-center gap-2 px-6 py-3 font-semibold rounded-lg transition-all duration-200;
+    @apply border border-outline-variant text-on-surface-variant;
+    background: rgba(255, 255, 255, 0.04);
+    @apply hover:border-outline hover:text-on-surface hover:bg-white/5 active:scale-95;
+    @apply focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-background;
+  }
+
+  .btn-ghost {
+    @apply inline-flex items-center gap-2 px-4 py-2 rounded-lg transition-all duration-200;
+    @apply text-on-surface-variant hover:text-on-surface hover:bg-white/5 active:scale-95;
+  }
+
+  /* Skill tags */
+  .skill-tag {
+    @apply inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold tracking-wide;
+    @apply bg-surface-container-highest text-on-surface-variant border border-outline-variant/50;
+    transition: all 0.15s ease;
+  }
+
+  .skill-tag-verified {
+    @apply inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold tracking-wide;
+    @apply bg-emerald-500/10 text-emerald-400 border border-emerald-500/30;
+  }
+
+  /* Input */
+  .input-field {
+    @apply w-full px-4 py-3 rounded-lg border border-outline-variant text-on-surface;
+    @apply placeholder:text-outline text-sm transition-all duration-200;
+    background: rgba(14, 13, 22, 0.6);
+    @apply focus:outline-none focus:border-primary-container focus:ring-1 focus:ring-primary-container/50;
+  }
+
+  /* Badge */
+  .badge-indigo {
+    @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold;
+    @apply bg-primary-container/20 text-primary border border-primary-container/30;
+  }
+
+  .badge-green {
+    @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold;
+    @apply bg-emerald-500/15 text-emerald-400 border border-emerald-500/25;
+  }
+
+  .badge-amber {
+    @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold;
+    @apply bg-amber-500/15 text-amber-400 border border-amber-500/25;
+  }
+
+  /* Progress bar */
+  .progress-bar {
+    @apply h-1.5 rounded-full bg-surface-container-highest overflow-hidden;
+  }
+
+  .progress-fill {
+    @apply h-full rounded-full bg-primary-container transition-all duration-700;
+  }
+
+  /* Nav link */
+  .nav-link {
+    @apply px-3 py-2 rounded-lg text-sm font-medium text-on-surface-variant transition-all duration-150;
+    @apply hover:text-on-surface hover:bg-white/5;
+  }
+
+  .nav-link-active {
+    @apply px-3 py-2 rounded-lg text-sm font-medium text-primary bg-primary-container/15 border border-primary-container/20;
+  }
+}
+
+@layer utilities {
+  .text-gradient {
+    background: linear-gradient(135deg, #c3c0ff 0%, #4f46e5 50%, #4edea3 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .text-gradient-indigo {
+    background: linear-gradient(135deg, #c3c0ff 0%, #818cf8 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .bg-grid {
+    background-image:
+      linear-gradient(rgba(79, 70, 229, 0.06) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(79, 70, 229, 0.06) 1px, transparent 1px);
+    background-size: 40px 40px;
+  }
+
+  .glow-indigo {
+    box-shadow: 0 0 30px rgba(79, 70, 229, 0.3), 0 0 60px rgba(79, 70, 229, 0.1);
+  }
+
+  .border-glow {
+    border: 1px solid rgba(79, 70, 229, 0.4);
+    box-shadow: 0 0 12px rgba(79, 70, 229, 0.2), inset 0 0 12px rgba(79, 70, 229, 0.05);
+  }
+
+  .top-highlight {
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+  }
+}
