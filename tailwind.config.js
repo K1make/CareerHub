@@ -11,86 +11,66 @@ export default {
         mono: ['JetBrains Mono', 'Fira Code', 'monospace'],
       },
       colors: {
-        surface: '#13121b',
-        'surface-dim': '#13121b',
-        'surface-bright': '#393842',
-        'surface-container-lowest': '#0e0d16',
-        'surface-container-low': '#1b1b24',
-        'surface-container': '#1f1f28',
-        'surface-container-high': '#2a2933',
-        'surface-container-highest': '#35343e',
-        'on-surface': '#e4e1ee',
-        'on-surface-variant': '#c7c4d8',
-        'inverse-surface': '#e4e1ee',
-        'inverse-on-surface': '#302f39',
-        outline: '#918fa1',
-        'outline-variant': '#464555',
-        'surface-tint': '#c3c0ff',
-        primary: '#c3c0ff',
-        'on-primary': '#1d00a5',
-        'primary-container': '#4f46e5',
-        'on-primary-container': '#dad7ff',
-        'inverse-primary': '#4d44e3',
-        secondary: '#4edea3',
-        'on-secondary': '#003824',
-        'secondary-container': '#00a572',
-        'on-secondary-container': '#00311f',
-        tertiary: '#ffb695',
-        'on-tertiary': '#571f00',
-        'tertiary-container': '#a44100',
-        'on-tertiary-container': '#ffd2be',
-        error: '#ffb4ab',
-        'on-error': '#690005',
-        'error-container': '#93000a',
-        'on-error-container': '#ffdad6',
-        background: '#13121b',
-        'on-background': '#e4e1ee',
-        'surface-variant': '#35343e',
-        // Semantic aliases
-        indigo: {
-          400: '#818cf8',
-          500: '#6366f1',
-          600: '#4f46e5',
-          700: '#4338ca',
-        },
-        emerald: {
-          400: '#34d399',
-          500: '#10b981',
-          600: '#059669',
-        },
-        amber: {
-          400: '#fbbf24',
-          500: '#f59e0b',
-        },
-        slate: {
-          500: '#64748b',
-          600: '#475569',
-          700: '#334155',
-          800: '#1e293b',
-          900: '#0f172a',
-          950: '#020617',
-        },
+        background: '#09090b', // zinc-950
+        'on-background': '#fafafa', // zinc-50
+        surface: '#09090b',
+        'surface-dim': '#09090b',
+        'surface-bright': '#18181b', // zinc-900
+        'surface-container-lowest': '#09090b',
+        'surface-container-low': '#09090b',
+        'surface-container': '#18181b', // zinc-900
+        'surface-container-high': '#27272a', // zinc-800
+        'surface-container-highest': '#3f3f46', // zinc-700
+        'on-surface': '#fafafa',
+        'on-surface-variant': '#a1a1aa', // zinc-400
+        'inverse-surface': '#fafafa',
+        'inverse-on-surface': '#09090b',
+        outline: '#3f3f46', // zinc-700
+        'outline-variant': '#27272a', // zinc-800
+        
+        // Primary - Electric/Subdued Blue
+        primary: '#3b82f6', // blue-500
+        'on-primary': '#ffffff',
+        'primary-container': '#1d4ed8', // blue-700
+        'on-primary-container': '#eff6ff',
+        
+        // Secondary - Slate/Gray
+        secondary: '#e4e4e7', // zinc-200
+        'on-secondary': '#18181b',
+        'secondary-container': '#27272a',
+        'on-secondary-container': '#e4e4e7',
+        
+        // Tertiary - Subtle Emerald for success
+        tertiary: '#10b981', // emerald-500
+        'on-tertiary': '#ffffff',
+        'tertiary-container': '#047857', // emerald-700
+        'on-tertiary-container': '#ecfdf5',
+        
+        error: '#ef4444',
+        'on-error': '#ffffff',
+        'error-container': '#b91c1c',
+        'on-error-container': '#fef2f2',
+        
+        'surface-variant': '#27272a',
       },
       borderRadius: {
-        sm: '0.25rem',
-        DEFAULT: '0.5rem',
-        md: '0.75rem',
-        lg: '1rem',
-        xl: '1.5rem',
+        sm: '0.125rem',
+        DEFAULT: '0.25rem',
+        md: '0.375rem',
+        lg: '0.5rem',
+        xl: '0.75rem',
+        '2xl': '1rem',
         full: '9999px',
       },
       backdropBlur: {
-        xs: '4px',
-        glass: '12px',
-        heavy: '20px',
+        xs: '2px',
+        glass: '8px',
+        heavy: '16px',
       },
       animation: {
-        'fade-in': 'fadeIn 0.3s ease-out',
-        'slide-up': 'slideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1)',
-        'slide-in-right': 'slideInRight 0.3s ease-out',
-        'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
-        'glow': 'glow 2s ease-in-out infinite alternate',
-        'float': 'float 3s ease-in-out infinite',
+        'fade-in': 'fadeIn 0.2s ease-out',
+        'slide-up': 'slideUp 0.3s ease-out',
+        'slide-in-right': 'slideInRight 0.2s ease-out',
       },
       keyframes: {
         fadeIn: {
@@ -98,29 +78,20 @@ export default {
           '100%': { opacity: '1' },
         },
         slideUp: {
-          '0%': { opacity: '0', transform: 'translateY(20px)' },
+          '0%': { opacity: '0', transform: 'translateY(10px)' },
           '100%': { opacity: '1', transform: 'translateY(0)' },
         },
         slideInRight: {
-          '0%': { opacity: '0', transform: 'translateX(20px)' },
+          '0%': { opacity: '0', transform: 'translateX(10px)' },
           '100%': { opacity: '1', transform: 'translateX(0)' },
-        },
-        glow: {
-          '0%': { boxShadow: '0 0 5px rgba(79,70,229,0.3)' },
-          '100%': { boxShadow: '0 0 20px rgba(79,70,229,0.7), 0 0 40px rgba(79,70,229,0.3)' },
-        },
-        float: {
-          '0%, 100%': { transform: 'translateY(0px)' },
-          '50%': { transform: 'translateY(-6px)' },
         },
       },
       boxShadow: {
-        glass: '0 4px 24px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.06)',
-        'glass-lg': '0 8px 40px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.08)',
-        glow: '0 0 20px rgba(79,70,229,0.4)',
-        'glow-green': '0 0 16px rgba(16,185,129,0.35)',
-        'glow-sm': '0 0 10px rgba(79,70,229,0.3)',
-        modal: '0 20px 60px rgba(0,0,0,0.7), 0 0 40px rgba(79,70,229,0.15)',
+        glass: '0 1px 2px 0 rgba(0, 0, 0, 0.05)',
+        'glass-lg': '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1)',
+        glow: '0 0 0 1px rgba(59, 130, 246, 0.5), 0 0 12px rgba(59, 130, 246, 0.2)',
+        'glow-sm': '0 0 0 1px rgba(59, 130, 246, 0.3)',
+        modal: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1)',
       },
     },
   },
