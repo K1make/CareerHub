@@ -19,7 +19,7 @@ function FieldError({ message }) {
 // ─── Student Register ─────────────────────────────────────────────────────────
 function StudentRegister() {
   const navigate = useNavigate();
-  const { login } = useAuth();
+  const { register } = useAuth();
   const [step, setStep] = useState(1);
   const [showPass, setShowPass] = useState(false);
   const [form, setForm] = useState({ university: 'МУИТ (IITU)', studentId: '', name: '', email: '', password: '' });
@@ -62,9 +62,21 @@ function StudentRegister() {
       const e2 = validateStep2();
       if (Object.keys(e2).length) { setErrors(e2); return; }
       setSubmitting(true);
-      await new Promise(r => setTimeout(r, 700));
-      login({ role: 'student', name: form.name });
-      navigate('/companies');
+      try {
+        await register({
+          role: 'student',
+          name: form.name,
+          email: form.email,
+          password: form.password,
+          university: form.university,
+          student_id: form.studentId,
+        });
+        navigate('/companies');
+      } catch (err) {
+        setErrors({ form: err.message });
+      } finally {
+        setSubmitting(false);
+      }
     }
   };
 
@@ -211,6 +223,7 @@ function StudentRegister() {
                 </span>
               ) : step === 2 ? 'Создать аккаунт' : 'Продолжить'}
             </button>
+            <FieldError message={errors.form} />
           </form>
 
           <div className="mt-6 pt-6 border-t border-outline-variant/50 text-center">
@@ -230,7 +243,7 @@ function StudentRegister() {
 // ─── Job Seeker Register ──────────────────────────────────────────────────────
 function JobSeekerRegister() {
   const navigate = useNavigate();
-  const { login } = useAuth();
+  const { register } = useAuth();
   const [showPass, setShowPass] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
   const [form, setForm] = useState({ name: '', email: '', password: '', confirm: '' });
@@ -263,9 +276,19 @@ function JobSeekerRegister() {
     const e2 = validate();
     if (Object.keys(e2).length) { setErrors(e2); return; }
     setSubmitting(true);
-    await new Promise(r => setTimeout(r, 700));
-    login({ role: 'jobseeker', name: form.name });
-    navigate('/companies');
+    try {
+      await register({
+        role: 'jobseeker',
+        name: form.name,
+        email: form.email,
+        password: form.password,
+      });
+      navigate('/companies');
+    } catch (err) {
+      setErrors({ form: err.message });
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   const field = (key) => ({
@@ -352,6 +375,7 @@ function JobSeekerRegister() {
                 </span>
               ) : 'Создать аккаунт'}
             </button>
+            <FieldError message={errors.form} />
           </form>
 
           <div className="mt-6 pt-6 border-t border-outline-variant/50 text-center">

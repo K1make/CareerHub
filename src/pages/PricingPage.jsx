@@ -1,6 +1,7 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { pricingPlans, companyPricingPlans } from '../data/mockData';
+import { api } from '../api/client';
 import {
   CheckCircle2, X, Sparkles, Zap, Crown, Star,
   ChevronRight, Lock, Shield
@@ -102,6 +103,25 @@ function PlanCard({ plan, annual }) {
 export default function PricingPage() {
   const [annual, setAnnual] = useState(false);
   const { user, isCompany } = useAuth();
+  const [plans, setPlans] = useState([]);
+  const [error, setError] = useState('');
+
+  useEffect(() => {
+    let active = true;
+    async function loadPlans() {
+      try {
+        const data = await api.pricing(isCompany ? 'company' : 'student');
+        if (active) setPlans(data);
+      } catch (err) {
+        if (active) {
+          setPlans(isCompany ? companyPricingPlans : pricingPlans);
+          setError(err.message);
+        }
+      }
+    }
+    loadPlans();
+    return () => { active = false; };
+  }, [isCompany]);
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
@@ -139,10 +159,15 @@ export default function PricingPage() {
             </button>
           </div>
         </div>
+        {error && (
+          <div className="alert-info mb-6 text-xs">
+            API fallback: {error}
+          </div>
+        )}
 
         {/* Plans grid */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-20 animate-slide-up items-start">
-          {(isCompany ? companyPricingPlans : pricingPlans).map(plan => {
+          {plans.map(plan => {
             let displayPlan = plan;
             if (user?.role === 'student' && plan.id === 'active') {
               displayPlan = {

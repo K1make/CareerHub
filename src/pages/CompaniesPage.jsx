@@ -8,7 +8,8 @@ import ChatWidget from '../components/ChatWidget';
 import EmptyState from '../components/ui/EmptyState';
 import LoadingState from '../components/ui/LoadingState';
 import PageHeader from '../components/ui/PageHeader';
-import { companies } from '../data/mockData';
+import { api } from '../api/client';
+import { companies as fallbackCompanies } from '../data/mockData';
 
 const INDUSTRIES = ['Все', 'IT / Classifieds', 'FinTech / E-commerce', 'FinTech', 'E-commerce', 'Smart City / AI', 'IT Outsourcing', 'IT / Search / AI'];
 const SIZES = ['Все', '200–500', '500–1000', '1000–5000', '5000+'];
@@ -110,11 +111,26 @@ export default function CompaniesPage() {
   const [onlyWithJobs, setOnlyWithJobs] = useState(false);
   const [showFilters, setShowFilters] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [companies, setCompanies] = useState([]);
+  const [error, setError] = useState('');
 
-  // Simulate data loading
   useEffect(() => {
-    const t = setTimeout(() => setLoading(false), 800);
-    return () => clearTimeout(t);
+    let active = true;
+    async function loadCompanies() {
+      try {
+        const data = await api.companies();
+        if (active) setCompanies(data);
+      } catch (err) {
+        if (active) {
+          setCompanies(fallbackCompanies);
+          setError(err.message);
+        }
+      } finally {
+        if (active) setLoading(false);
+      }
+    }
+    loadCompanies();
+    return () => { active = false; };
   }, []);
 
   const filtered = useMemo(() => {
@@ -153,6 +169,11 @@ export default function CompaniesPage() {
           title="Компании-партнёры"
           subtitle={`${companies.length} ведущих компаний. Выберите идеальное место работы.`}
         />
+        {error && (
+          <div className="alert-info mb-4 text-xs">
+            API fallback: {error}
+          </div>
+        )}
 
         {/* Search + filter toggle */}
         <div className="flex flex-col sm:flex-row gap-3 mb-4">

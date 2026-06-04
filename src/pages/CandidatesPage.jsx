@@ -8,7 +8,8 @@ import ChatWidget from '../components/ChatWidget';
 import EmptyState from '../components/ui/EmptyState';
 import LoadingState from '../components/ui/LoadingState';
 import PageHeader from '../components/ui/PageHeader';
-import { candidates } from '../data/mockData';
+import { api } from '../api/client';
+import { candidates as fallbackCandidates } from '../data/mockData';
 
 const LEVELS = ['Все', 'Junior', 'Middle', 'Senior'];
 const FORMATS = ['Все', 'Remote', 'Office', 'Hybrid'];
@@ -35,6 +36,20 @@ function FormatBadge({ format }) {
 
 function CandidateCard({ candidate }) {
   const [invited, setInvited] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+
+  const invite = async () => {
+    if (invited || submitting || !candidate.available) return;
+    setSubmitting(true);
+    try {
+      await api.inviteCandidate(candidate.id);
+    } catch {
+      // Keep the optimistic UX for demo data fallback.
+    } finally {
+      setInvited(true);
+      setSubmitting(false);
+    }
+  };
 
   return (
     <div className="glass-card card-hover p-5 flex flex-col h-full group">
@@ -116,11 +131,11 @@ function CandidateCard({ candidate }) {
             ? 'bg-tertiary/10 text-tertiary border-tertiary/20 cursor-default'
             : 'btn-primary'
         }`}
-        onClick={() => setInvited(true)}
-        disabled={invited || !candidate.available}
+        onClick={invite}
+        disabled={invited || submitting || !candidate.available}
       >
         <Mail className="w-3.5 h-3.5" />
-        {invited ? 'Приглашение отправлено ✓' : 'Пригласить на собеседование'}
+        {invited ? 'Приглашение отправлено ✓' : submitting ? 'Отправка...' : 'Пригласить на собеседование'}
       </button>
     </div>
   );
@@ -148,10 +163,26 @@ export default function CandidatesPage() {
   const [selectedSkills, setSelectedSkills] = useState([]);
   const [showFilters, setShowFilters] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [candidates, setCandidates] = useState([]);
+  const [error, setError] = useState('');
 
   useEffect(() => {
-    const t = setTimeout(() => setLoading(false), 800);
-    return () => clearTimeout(t);
+    let active = true;
+    async function loadCandidates() {
+      try {
+        const data = await api.candidates();
+        if (active) setCandidates(data);
+      } catch (err) {
+        if (active) {
+          setCandidates(fallbackCandidates);
+          setError(err.message);
+        }
+      } finally {
+        if (active) setLoading(false);
+      }
+    }
+    loadCandidates();
+    return () => { active = false; };
   }, []);
 
   const toggleSkill = (skill) => {
@@ -195,6 +226,11 @@ export default function CandidatesPage() {
           title="Кандидаты"
           subtitle={`${candidates.length} верифицированных специалистов. Найдите идеального кандидата.`}
         />
+        {error && (
+          <div className="alert-info mb-4 text-xs">
+            API fallback: {error}
+          </div>
+        )}
 
         {/* Search + filter toggle */}
         <div className="flex flex-col sm:flex-row gap-3 mb-4">

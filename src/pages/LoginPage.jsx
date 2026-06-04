@@ -46,12 +46,14 @@ export default function LoginPage() {
     if (Object.keys(e2).length) { setErrors(e2); return; }
 
     setSubmitting(true);
-    // Simulate async auth
-    await new Promise(r => setTimeout(r, 600));
-
-    const name = role === 'company' ? 'Kaspi.kz' : 'Мансур';
-    login({ role, name });
-    navigate(role === 'company' ? '/candidates' : '/companies');
+    try {
+      const user = await login({ ...form, role });
+      navigate(user.role === 'company' ? '/candidates' : '/companies');
+    } catch (err) {
+      setErrors({ form: err.message });
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   const field = (key) => ({
@@ -162,6 +164,7 @@ export default function LoginPage() {
                 </span>
               ) : 'Войти в аккаунт'}
             </button>
+            <FieldError message={errors.form} />
           </form>
 
           <div className="mt-6 pt-6 border-t border-outline-variant/50 text-center">

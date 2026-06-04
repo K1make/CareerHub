@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { pythonTestQuestions } from '../data/mockData';
+import { pythonTestQuestions as fallbackQuestions } from '../data/mockData';
+import { api } from '../api/client';
 import {
   Brain, Clock, ChevronRight, ChevronLeft, X, CheckCircle,
   AlertTriangle, ExternalLink, BookOpen, Sparkles, ArrowLeft, Target
@@ -152,16 +153,40 @@ function ResultModal({ onClose, onRetry }) {
 
 export default function TestPage() {
   const navigate = useNavigate();
+  const [pythonTestQuestions, setPythonTestQuestions] = useState([]);
   const [currentQ, setCurrentQ] = useState(0);
   const [answers, setAnswers] = useState({});
   const [showResult, setShowResult] = useState(false);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [timeLeft, setTimeLeft] = useState(600); // 10 minutes
+  const [apiError, setApiError] = useState('');
+
+  useEffect(() => {
+    let active = true;
+    async function loadQuestions() {
+      try {
+        const data = await api.pythonTest();
+        if (active) setPythonTestQuestions(data.questions || []);
+      } catch (err) {
+        if (active) {
+          setPythonTestQuestions(fallbackQuestions);
+          setApiError(err.message);
+        }
+      }
+    }
+    loadQuestions();
+    return () => { active = false; };
+  }, []);
 
   // Declare handleFinish before the timer useEffect that references it
   const handleFinish = () => {
     setIsAnalyzing(true);
-    setTimeout(() => {
+    setTimeout(async () => {
+      try {
+        await api.submitPythonTest(answers);
+      } catch (err) {
+        setApiError(err.message);
+      }
       setIsAnalyzing(false);
       setShowResult(true);
     }, 3000);
@@ -208,6 +233,19 @@ export default function TestPage() {
 
   const allAnswered = pythonTestQuestions.every(q => answers[q.id]);
 
+  if (!question) {
+    return (
+      <div className="min-h-screen bg-background">
+        <AppNavbar />
+        <main className="max-w-3xl mx-auto px-6 py-12">
+          <div className="bg-surface border border-outline-variant p-8 rounded-2xl text-on-surface">
+            Загрузка теста...
+          </div>
+        </main>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-background">
       <AppNavbar />
@@ -249,6 +287,7 @@ export default function TestPage() {
           <p className="text-on-surface-variant text-sm">
             Вопрос {currentQ + 1} из {total} · Проходной балл: 70%
           </p>
+          {apiError && <p className="text-outline text-xs mt-2">API fallback: {apiError}</p>}
         </div>
 
         {/* Question card */}
