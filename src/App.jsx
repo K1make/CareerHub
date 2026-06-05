@@ -2,7 +2,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 import ProtectedRoute from './components/ProtectedRoute';
 import OnboardingPage from './pages/OnboardingPage';
-import { StudentRegister, JobSeekerRegister } from './pages/RegisterPage';
+import { StudentRegister, JobSeekerRegister, CompanyRegister } from './pages/RegisterPage';
 import CompaniesPage from './pages/CompaniesPage';
 import CandidatesPage from './pages/CandidatesPage';
 import TestPage from './pages/TestPage';
@@ -19,6 +19,7 @@ export default function App() {
           <Route path="/" element={<OnboardingPage />} />
           <Route path="/register/student" element={<StudentRegister />} />
           <Route path="/register/jobseeker" element={<JobSeekerRegister />} />
+          <Route path="/register/company" element={<CompanyRegister />} />
           <Route path="/login" element={<LoginPage />} />
 
           {/* Student / Job Seeker only */}

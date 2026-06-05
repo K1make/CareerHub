@@ -67,9 +67,9 @@ const paths = [
     icon: Building2,
     title: 'Для компаний',
     description: 'Доступ к базе проверенных талантов. Нанимайте быстрее и эффективнее.',
-    badge: 'Временно по паролю',
-    cta: 'Войти как компания',
-    route: '/login',
+    badge: 'Регистрация по email',
+    cta: 'Зарегистрировать компанию',
+    route: '/register/company',
   },
 ];
 

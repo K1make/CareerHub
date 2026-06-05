@@ -392,4 +392,156 @@ function JobSeekerRegister() {
   );
 }
 
-export { StudentRegister, JobSeekerRegister };
+// ─── Company Register ─────────────────────────────────────────────────────────
+function CompanyRegister() {
+  const navigate = useNavigate();
+  const { register } = useAuth();
+  const [showPass, setShowPass] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
+  const [form, setForm] = useState({ name: '', email: '', password: '', confirm: '' });
+  const [errors, setErrors] = useState({});
+  const [submitting, setSubmitting] = useState(false);
+
+  const validate = () => {
+    const e = {};
+    if (!form.name.trim()) e.name = 'Введите название компании';
+    if (!form.email.trim()) {
+      e.email = 'Введите корпоративный email';
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) {
+      e.email = 'Некорректный формат email';
+    }
+    if (!form.password) {
+      e.password = 'Введите пароль';
+    } else if (form.password.length < 8) {
+      e.password = 'Пароль должен содержать минимум 8 символов';
+    }
+    if (!form.confirm) {
+      e.confirm = 'Подтвердите пароль';
+    } else if (form.password !== form.confirm) {
+      e.confirm = 'Пароли не совпадают';
+    }
+    return e;
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    const e2 = validate();
+    if (Object.keys(e2).length) { setErrors(e2); return; }
+    setSubmitting(true);
+    try {
+      await register({
+        role: 'company',
+        name: form.name,
+        email: form.email,
+        password: form.password,
+      });
+      navigate('/candidates');
+    } catch (err) {
+      setErrors({ form: err.message });
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const field = (key) => ({
+    value: form[key],
+    onChange: (ev) => { setForm(f => ({ ...f, [key]: ev.target.value })); setErrors(er => ({ ...er, [key]: '' })); },
+    className: `input-field${errors[key] ? ' input-error' : ''}`,
+  });
+
+  return (
+    <div className="min-h-screen bg-background flex flex-col items-center justify-center px-4 relative overflow-hidden">
+      <div className="w-full max-w-md animate-slide-up relative z-10">
+        <button
+          id="company-back-btn"
+          className="flex items-center gap-2 text-sm font-medium text-on-surface-variant hover:text-on-surface transition-colors mb-8 -ml-2"
+          onClick={() => navigate('/')}
+        >
+          <ArrowLeft className="w-4 h-4" /> Назад
+        </button>
+
+        <div className="bg-surface border border-outline-variant rounded-2xl p-8 shadow-glass-lg">
+          <div className="flex flex-col items-center mb-8">
+            <div className="flex items-center justify-center w-12 h-12 rounded-xl bg-surface-container border border-outline-variant text-on-surface mb-4">
+              <Sparkles className="w-6 h-6" />
+            </div>
+            <h2 className="text-2xl font-semibold text-on-surface text-center tracking-tight mb-1">Аккаунт Компании</h2>
+            <p className="text-on-surface-variant text-sm text-center">Найдите лучших кандидатов для вашей команды</p>
+          </div>
+
+          <form onSubmit={handleSubmit} className="space-y-5" noValidate>
+            <div className="space-y-1.5">
+              <label className="block text-xs font-medium text-on-surface-variant">Название компании</label>
+              <input id="comp-name" type="text" placeholder="Например: Tech Corp" {...field('name')} />
+              <FieldError message={errors.name} />
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="block text-xs font-medium text-on-surface-variant">Email</label>
+              <input id="comp-email" type="email" placeholder="hr@company.com" {...field('email')} />
+              <FieldError message={errors.email} />
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="block text-xs font-medium text-on-surface-variant">Пароль</label>
+              <div className="relative">
+                <input
+                  id="comp-password"
+                  type={showPass ? 'text' : 'password'}
+                  placeholder="Минимум 8 символов"
+                  {...field('password')}
+                  className={`input-field pr-10${errors.password ? ' input-error' : ''}`}
+                />
+                <button type="button" className="absolute right-3 top-1/2 -translate-y-1/2 text-outline hover:text-on-surface-variant transition-colors" onClick={() => setShowPass(s => !s)}>
+                  {showPass ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                </button>
+              </div>
+              <FieldError message={errors.password} />
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="block text-xs font-medium text-on-surface-variant">Подтверждение пароля</label>
+              <div className="relative">
+                <input
+                  id="comp-confirm"
+                  type={showConfirm ? 'text' : 'password'}
+                  placeholder="Повторите пароль"
+                  {...field('confirm')}
+                  className={`input-field pr-10${errors.confirm ? ' input-error' : ''}`}
+                />
+                <button type="button" className="absolute right-3 top-1/2 -translate-y-1/2 text-outline hover:text-on-surface-variant transition-colors" onClick={() => setShowConfirm(s => !s)}>
+                  {showConfirm ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                </button>
+              </div>
+              <FieldError message={errors.confirm} />
+            </div>
+
+            <button id="comp-submit-btn" type="submit" disabled={submitting} className="btn-primary w-full mt-6">
+              {submitting ? (
+                <span className="flex items-center gap-2">
+                  <svg className="animate-spin w-4 h-4" viewBox="0 0 24 24" fill="none">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
+                  </svg>
+                  Регистрация...
+                </span>
+              ) : 'Зарегистрировать компанию'}
+            </button>
+            <FieldError message={errors.form} />
+          </form>
+
+          <div className="mt-6 pt-6 border-t border-outline-variant/50 text-center">
+            <p className="text-sm text-on-surface-variant">
+              Уже есть аккаунт?{' '}
+              <button id="comp-login-link" className="text-on-surface font-medium hover:underline" onClick={() => navigate('/login', { state: { role: 'company' } })}>
+                Войти
+              </button>
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export { StudentRegister, JobSeekerRegister, CompanyRegister };
