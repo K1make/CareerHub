@@ -1,7 +1,7 @@
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, useCallback } from 'react';
 import {
-  MapPin, Search, Briefcase, ExternalLink, Building2,
-  CheckCircle2, SlidersHorizontal, X, Users
+  MapPin, Search, Briefcase, Building2, X,
+  SlidersHorizontal, Clock, DollarSign, RefreshCw, ExternalLink
 } from 'lucide-react';
 import AppNavbar from '../components/AppNavbar';
 import ChatWidget from '../components/ChatWidget';
@@ -9,85 +9,229 @@ import EmptyState from '../components/ui/EmptyState';
 import LoadingState from '../components/ui/LoadingState';
 import PageHeader from '../components/ui/PageHeader';
 import { api } from '../api/client';
-import { companies as fallbackCompanies } from '../data/mockData';
 
-const INDUSTRIES = ['Все', 'IT / Classifieds', 'FinTech / E-commerce', 'FinTech', 'E-commerce', 'Smart City / AI', 'IT Outsourcing', 'IT / Search / AI'];
-const SIZES = ['Все', '200–500', '500–1000', '1000–5000', '5000+'];
-const LOCATIONS = ['Все', 'Алматы', 'Астана', 'Астана · Алматы'];
+const REFRESH_INTERVAL = 30_000;
 
-function CompanyCard({ company }) {
+// ─── Company Profile Modal ─────────────────────────────────────────────────────
+function CompanyProfileModal({ companyId, onClose }) {
+  const [data, setData] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+
+  useEffect(() => {
+    let active = true;
+    api.companyProfile(companyId)
+      .then(d => { if (active) setData(d); })
+      .catch(e => { if (active) setError(e.message); })
+      .finally(() => { if (active) setLoading(false); });
+    return () => { active = false; };
+  }, [companyId]);
+
+  const initials = data?.company?.name
+    ? data.company.name.split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2)
+    : '??';
+
   return (
-    <div className="glass-card card-hover p-5 flex flex-col h-full group">
-      {/* Header */}
-      <div className="flex items-start justify-between mb-4">
-        <div className="flex items-center gap-3">
-          <div className="w-11 h-11 rounded-xl bg-surface-container-high border border-outline-variant flex items-center justify-center text-on-surface font-bold text-sm flex-shrink-0">
-            {company.initials}
-          </div>
-          <div className="min-w-0">
-            <h3 className="font-semibold text-on-surface text-sm leading-tight truncate">{company.name}</h3>
-            <p className="text-xs text-on-surface-variant truncate">{company.industry}</p>
-          </div>
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 bg-black/60 backdrop-blur-sm animate-fade-in"
+      onClick={e => e.target === e.currentTarget && onClose()}
+    >
+      <div className="bg-surface w-full max-w-2xl rounded-2xl shadow-xl overflow-hidden flex flex-col max-h-[90vh]">
+        <div className="flex items-center justify-between p-6 border-b border-outline-variant/30">
+          <h2 className="text-xl font-bold text-on-surface">Профиль компании</h2>
+          <button
+            onClick={onClose}
+            className="p-2 -mr-2 rounded-lg text-on-surface-variant hover:bg-surface-container transition-colors"
+          >
+            <X className="w-5 h-5" />
+          </button>
         </div>
-        {company.available && company.openJobs > 0 ? (
-          <span className="badge badge-green text-[10px] flex-shrink-0 ml-2">
-            <span className="w-1.5 h-1.5 bg-tertiary rounded-full" />
-            Найм
-          </span>
-        ) : (
-          <span className="badge badge-outline text-[10px] flex-shrink-0 ml-2">Нет найма</span>
-        )}
+
+        <div className="overflow-y-auto flex-1 p-6">
+          {loading && <LoadingState count={3} />}
+          {error && <div className="alert-error text-xs">{error}</div>}
+          {data && (
+            <div className="space-y-6">
+              {/* Company header */}
+              <div className="flex items-center gap-4">
+                <div className="w-16 h-16 rounded-2xl bg-primary/10 border border-primary/20 flex items-center justify-center text-primary font-bold text-xl flex-shrink-0">
+                  {initials}
+                </div>
+                <div>
+                  <h3 className="text-lg font-semibold text-on-surface">{data.company.name}</h3>
+                  <p className="text-sm text-on-surface-variant">{data.company.email}</p>
+                  <span className="badge badge-indigo mt-1">Компания</span>
+                </div>
+              </div>
+
+              {/* Vacancies */}
+              <div>
+                <h4 className="text-sm font-semibold text-on-surface mb-3 flex items-center gap-2">
+                  <Briefcase className="w-4 h-4 text-primary" />
+                  Открытые вакансии ({data.vacancies.length})
+                </h4>
+                {data.vacancies.length === 0 ? (
+                  <p className="text-sm text-on-surface-variant">Нет открытых вакансий.</p>
+                ) : (
+                  <div className="space-y-3">
+                    {data.vacancies.map(v => (
+                      <div key={v.id} className="glass-card p-4">
+                        <div className="flex items-start justify-between gap-2 mb-2">
+                          <h5 className="font-medium text-on-surface text-sm">{v.title}</h5>
+                          <span className="badge badge-indigo text-[10px] whitespace-nowrap">{v.type}</span>
+                        </div>
+                        <div className="flex flex-wrap gap-3 text-xs text-on-surface-variant">
+                          <span className="flex items-center gap-1"><MapPin className="w-3 h-3" />{v.location}</span>
+                          {v.salary && <span className="flex items-center gap-1"><DollarSign className="w-3 h-3" />{v.salary}</span>}
+                        </div>
+                        {v.description && (
+                          <p className="text-xs text-on-surface-variant mt-2 line-clamp-2">{v.description}</p>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+        </div>
       </div>
-
-      {/* Description */}
-      <p className="text-xs text-on-surface-variant leading-relaxed mb-4 line-clamp-2 flex-1">
-        {company.description}
-      </p>
-
-      {/* Meta */}
-      <div className="flex flex-wrap gap-3 text-xs text-on-surface-variant mb-4">
-        <span className="flex items-center gap-1.5">
-          <MapPin className="w-3.5 h-3.5" />
-          {company.location}
-        </span>
-        <span className="flex items-center gap-1.5">
-          <Users className="w-3.5 h-3.5" />
-          {company.size} сотр.
-        </span>
-        {company.openJobs > 0 && (
-          <span className="flex items-center gap-1.5 text-tertiary font-medium">
-            <Briefcase className="w-3.5 h-3.5" />
-            {company.openJobs} вакансий
-          </span>
-        )}
-      </div>
-
-      {/* Skills */}
-      <div className="flex flex-wrap gap-1.5 mb-4">
-        {company.skills.slice(0, 3).map(skill => (
-          skill.verified ? (
-            <span key={skill.name} className="skill-tag-verified">
-              <CheckCircle2 className="w-3 h-3 text-primary" />
-              {skill.name}
-            </span>
-          ) : (
-            <span key={skill.name} className="skill-tag">{skill.name}</span>
-          )
-        ))}
-      </div>
-
-      {/* CTA */}
-      <button
-        className="btn-secondary w-full text-xs py-2 mt-auto group-hover:border-primary/30 group-hover:text-primary transition-colors"
-        onClick={() => window.open(`https://hh.kz/search/vacancy?text=${encodeURIComponent(company.name)}`, '_blank')}
-      >
-        <ExternalLink className="w-3.5 h-3.5" />
-        Смотреть вакансии
-      </button>
     </div>
   );
 }
 
+// ─── Vacancy Detail Modal ──────────────────────────────────────────────────────
+function VacancyDetailModal({ vacancy, onClose, onViewCompany }) {
+  if (!vacancy) return null;
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 bg-black/60 backdrop-blur-sm animate-fade-in"
+      onClick={e => e.target === e.currentTarget && onClose()}
+    >
+      <div className="bg-surface w-full max-w-xl rounded-2xl shadow-xl overflow-hidden flex flex-col max-h-[90vh]">
+        <div className="flex items-center justify-between p-6 border-b border-outline-variant/30">
+          <h2 className="text-xl font-bold text-on-surface truncate pr-4">{vacancy.title}</h2>
+          <button
+            onClick={onClose}
+            className="p-2 -mr-2 rounded-lg text-on-surface-variant hover:bg-surface-container transition-colors flex-shrink-0"
+          >
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+
+        <div className="overflow-y-auto flex-1 p-6 space-y-5">
+          {/* Company & badges */}
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center text-primary font-bold text-sm flex-shrink-0">
+              {vacancy.company?.name?.split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2) || '??'}
+            </div>
+            <div>
+              <p className="text-sm font-medium text-on-surface">{vacancy.company?.name || 'Компания'}</p>
+              <div className="flex flex-wrap gap-1.5 mt-1">
+                <span className="badge badge-indigo">{vacancy.type}</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Meta */}
+          <div className="flex flex-wrap gap-4 text-sm text-on-surface-variant">
+            <span className="flex items-center gap-1.5"><MapPin className="w-4 h-4" />{vacancy.location}</span>
+            {vacancy.salary && <span className="flex items-center gap-1.5"><DollarSign className="w-4 h-4" />{vacancy.salary}</span>}
+            {vacancy.department && <span className="flex items-center gap-1.5"><Briefcase className="w-4 h-4" />{vacancy.department}</span>}
+            <span className="flex items-center gap-1.5">
+              <Clock className="w-4 h-4" />
+              {new Date(vacancy.created_at).toLocaleDateString('ru-RU')}
+            </span>
+          </div>
+
+          {/* Description */}
+          {vacancy.description && (
+            <div>
+              <h4 className="text-sm font-semibold text-on-surface mb-2">Описание</h4>
+              <p className="text-sm text-on-surface-variant leading-relaxed whitespace-pre-wrap">{vacancy.description}</p>
+            </div>
+          )}
+
+          {/* Requirements */}
+          {vacancy.requirements?.length > 0 && (
+            <div>
+              <h4 className="text-sm font-semibold text-on-surface mb-2">Требования</h4>
+              <ul className="space-y-1.5">
+                {vacancy.requirements.map((r, i) => (
+                  <li key={i} className="text-sm text-on-surface-variant flex items-start gap-2">
+                    <span className="w-1.5 h-1.5 rounded-full bg-primary mt-2 flex-shrink-0" />
+                    {r}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+        </div>
+
+        <div className="p-6 border-t border-outline-variant/30 flex justify-between gap-3 bg-surface-container-lowest">
+          <button onClick={onClose} className="btn-secondary">Закрыть</button>
+          <button
+            onClick={() => onViewCompany(vacancy.company?.id)}
+            className="btn-primary flex items-center gap-2"
+          >
+            <Building2 className="w-4 h-4" />
+            Профиль компании
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── Vacancy Card ──────────────────────────────────────────────────────────────
+function VacancyCard({ vacancy, onView }) {
+  const initials = vacancy.company?.name
+    ? vacancy.company.name.split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2)
+    : '??';
+
+  return (
+    <div
+      className="glass-card card-hover p-5 flex flex-col h-full group cursor-pointer"
+      onClick={() => onView(vacancy)}
+    >
+      <div className="flex items-start justify-between mb-3">
+        <div className="flex items-center gap-3 min-w-0">
+          <div className="w-10 h-10 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center text-primary font-bold text-sm flex-shrink-0">
+            {initials}
+          </div>
+          <div className="min-w-0">
+            <h3 className="font-semibold text-on-surface text-sm leading-tight truncate">{vacancy.title}</h3>
+            <p className="text-xs text-on-surface-variant truncate">{vacancy.company?.name || 'Компания'}</p>
+          </div>
+        </div>
+        <span className="badge badge-indigo text-[10px] flex-shrink-0 ml-2 whitespace-nowrap">{vacancy.type}</span>
+      </div>
+
+      <div className="flex flex-wrap gap-3 text-xs text-on-surface-variant mb-3">
+        <span className="flex items-center gap-1.5"><MapPin className="w-3.5 h-3.5" />{vacancy.location}</span>
+        {vacancy.salary && <span className="flex items-center gap-1.5"><DollarSign className="w-3.5 h-3.5" />{vacancy.salary}</span>}
+      </div>
+
+      {vacancy.description && (
+        <p className="text-xs text-on-surface-variant leading-relaxed mb-3 line-clamp-2 flex-1">
+          {vacancy.description}
+        </p>
+      )}
+
+      <div className="pt-3 border-t border-outline-variant/30 flex items-center justify-between">
+        <span className="text-xs text-outline flex items-center gap-1.5">
+          <Clock className="w-3 h-3" />
+          {new Date(vacancy.created_at).toLocaleDateString('ru-RU')}
+        </span>
+        <span className="text-xs text-primary font-medium flex items-center gap-1 group-hover:gap-2 transition-all">
+          <ExternalLink className="w-3 h-3" /> Подробнее
+        </span>
+      </div>
+    </div>
+  );
+}
+
+// ─── Filter Chip ───────────────────────────────────────────────────────────────
 function FilterChip({ label, active, onClick }) {
   return (
     <button
@@ -103,59 +247,57 @@ function FilterChip({ label, active, onClick }) {
   );
 }
 
+const JOB_TYPES = ['Все', 'Полная занятость', 'Частичная занятость', 'Стажировка', 'Проектная работа'];
+
+// ─── Page ──────────────────────────────────────────────────────────────────────
 export default function CompaniesPage() {
   const [search, setSearch] = useState('');
-  const [industry, setIndustry] = useState('Все');
-  const [size, setSize] = useState('Все');
-  const [location, setLocation] = useState('Все');
-  const [onlyWithJobs, setOnlyWithJobs] = useState(false);
+  const [jobType, setJobType] = useState('Все');
   const [showFilters, setShowFilters] = useState(false);
   const [loading, setLoading] = useState(true);
-  const [companies, setCompanies] = useState([]);
+  const [vacancies, setVacancies] = useState([]);
   const [error, setError] = useState('');
+  const [selectedVacancy, setSelectedVacancy] = useState(null);
+  const [profileCompanyId, setProfileCompanyId] = useState(null);
+  const [lastRefresh, setLastRefresh] = useState(null);
 
-  useEffect(() => {
-    let active = true;
-    async function loadCompanies() {
-      try {
-        const data = await api.companies();
-        if (active) setCompanies(data);
-      } catch (err) {
-        if (active) {
-          setCompanies(fallbackCompanies);
-          setError(err.message);
-        }
-      } finally {
-        if (active) setLoading(false);
-      }
+  const loadVacancies = useCallback(async () => {
+    try {
+      const data = await api.allVacancies();
+      setVacancies(data);
+      setError('');
+      setLastRefresh(new Date());
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
     }
-    loadCompanies();
-    return () => { active = false; };
   }, []);
 
+  useEffect(() => {
+    loadVacancies();
+    const interval = setInterval(loadVacancies, REFRESH_INTERVAL);
+    return () => clearInterval(interval);
+  }, [loadVacancies]);
+
   const filtered = useMemo(() => {
-    return companies.filter(c => {
+    return vacancies.filter(v => {
       const q = search.toLowerCase();
       const matchSearch = !q ||
-        c.name.toLowerCase().includes(q) ||
-        c.industry.toLowerCase().includes(q) ||
-        c.skills.some(s => s.name.toLowerCase().includes(q));
-      const matchIndustry = industry === 'Все' || c.industry === industry;
-      const matchSize = size === 'Все' || c.size === size;
-      const matchLocation = location === 'Все' || c.location.includes(location.split(' ·')[0]);
-      const matchJobs = !onlyWithJobs || c.openJobs > 0;
-      return matchSearch && matchIndustry && matchSize && matchLocation && matchJobs;
+        (v.title || '').toLowerCase().includes(q) ||
+        (v.company?.name || '').toLowerCase().includes(q) ||
+        (v.location || '').toLowerCase().includes(q);
+      const matchType = jobType === 'Все' || v.type === jobType;
+      return matchSearch && matchType;
     });
-  }, [search, industry, size, location, onlyWithJobs]);
+  }, [search, jobType, vacancies]);
 
-  const hasFilters = industry !== 'Все' || size !== 'Все' || location !== 'Все' || onlyWithJobs || search;
+  const hasFilters = jobType !== 'Все' || search;
+  const clearFilters = () => { setSearch(''); setJobType('Все'); };
 
-  const clearFilters = () => {
-    setSearch('');
-    setIndustry('Все');
-    setSize('Все');
-    setLocation('Все');
-    setOnlyWithJobs(false);
+  const handleViewCompany = (id) => {
+    setSelectedVacancy(null);
+    setProfileCompanyId(id);
   };
 
   return (
@@ -163,27 +305,38 @@ export default function CompaniesPage() {
       <AppNavbar />
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 py-10">
-        <PageHeader
-          icon={Building2}
-          eyebrow="База работодателей"
-          title="Компании-партнёры"
-          subtitle={`${companies.length} ведущих компаний. Выберите идеальное место работы.`}
-        />
-        {error && (
-          <div className="alert-info mb-4 text-xs">
-            API fallback: {error}
-          </div>
+        <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 mb-8">
+          <PageHeader
+            icon={Briefcase}
+            eyebrow="Вакансии компаний"
+            title="Доступные вакансии"
+            subtitle={`${vacancies.length} актуальных вакансий. Данные обновляются в реальном времени.`}
+          />
+          <button
+            onClick={loadVacancies}
+            className="btn-secondary flex items-center gap-2 self-start mt-1"
+          >
+            <RefreshCw className="w-4 h-4" />
+            Обновить
+          </button>
+        </div>
+
+        {error && <div className="alert-error mb-4 text-xs">Ошибка загрузки: {error}</div>}
+        {lastRefresh && (
+          <p className="text-xs text-on-surface-variant mb-4">
+            Последнее обновление: {lastRefresh.toLocaleTimeString('ru-RU')}
+          </p>
         )}
 
-        {/* Search + filter toggle */}
+        {/* Search + filter */}
         <div className="flex flex-col sm:flex-row gap-3 mb-4">
           <div className="relative flex-1 max-w-lg">
             <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-outline pointer-events-none" />
             <input
-              id="companies-search"
+              id="vacancies-search"
               type="text"
               className="input-field pl-10"
-              placeholder="Поиск по названию, индустрии или технологии..."
+              placeholder="Поиск по названию, компании или локации..."
               value={search}
               onChange={e => setSearch(e.target.value)}
             />
@@ -198,45 +351,15 @@ export default function CompaniesPage() {
           </button>
         </div>
 
-        {/* Expandable filters */}
         {showFilters && (
           <div className="glass-card p-5 mb-6 animate-fade-in space-y-4">
-            {/* Industry */}
             <div>
-              <p className="section-label mb-2">Индустрия</p>
+              <p className="section-label mb-2">Тип занятости</p>
               <div className="flex flex-wrap gap-2">
-                {INDUSTRIES.map(v => (
-                  <FilterChip key={v} label={v} active={industry === v} onClick={() => setIndustry(v)} />
+                {JOB_TYPES.map(v => (
+                  <FilterChip key={v} label={v} active={jobType === v} onClick={() => setJobType(v)} />
                 ))}
               </div>
-            </div>
-            {/* Size */}
-            <div>
-              <p className="section-label mb-2">Размер компании</p>
-              <div className="flex flex-wrap gap-2">
-                {SIZES.map(v => (
-                  <FilterChip key={v} label={v === 'Все' ? 'Все' : `${v} сотр.`} active={size === v} onClick={() => setSize(v)} />
-                ))}
-              </div>
-            </div>
-            {/* Location */}
-            <div>
-              <p className="section-label mb-2">Локация</p>
-              <div className="flex flex-wrap gap-2">
-                {LOCATIONS.map(v => (
-                  <FilterChip key={v} label={v} active={location === v} onClick={() => setLocation(v)} />
-                ))}
-              </div>
-            </div>
-            {/* Toggle */}
-            <div className="flex items-center gap-3 pt-1">
-              <button
-                onClick={() => setOnlyWithJobs(v => !v)}
-                className={`relative w-10 h-5 rounded-full border transition-colors duration-200 ${onlyWithJobs ? 'bg-primary border-primary' : 'bg-surface-container-high border-outline-variant'}`}
-              >
-                <span className={`absolute top-0.5 w-4 h-4 rounded-full bg-white shadow transition-transform duration-200 ${onlyWithJobs ? 'translate-x-5' : 'translate-x-0.5'}`} />
-              </button>
-              <span className="text-sm text-on-surface-variant">Только с открытыми вакансиями</span>
             </div>
             {hasFilters && (
               <button onClick={clearFilters} className="flex items-center gap-1.5 text-xs text-error hover:text-error/80 transition-colors">
@@ -246,33 +369,48 @@ export default function CompaniesPage() {
           </div>
         )}
 
-        {/* Results count */}
         {!loading && (
-          <div className="flex items-center justify-between mb-6">
+          <div className="mb-6">
             <p className="text-sm text-on-surface-variant">
-              Найдено <span className="font-semibold text-on-surface">{filtered.length}</span> из {companies.length} компаний
+              Найдено <span className="font-semibold text-on-surface">{filtered.length}</span> из {vacancies.length} вакансий
             </p>
           </div>
         )}
 
-        {/* Grid */}
         {loading ? (
           <LoadingState count={8} />
         ) : filtered.length > 0 ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5 animate-fade-in">
-            {filtered.map(company => (
-              <CompanyCard key={company.id} company={company} />
+            {filtered.map(v => (
+              <VacancyCard key={v.id} vacancy={v} onView={setSelectedVacancy} />
             ))}
           </div>
         ) : (
           <EmptyState
-            icon={Building2}
-            title="Компании не найдены"
-            description="Попробуйте изменить параметры поиска или сбросить фильтры."
+            icon={Briefcase}
+            title="Вакансии не найдены"
+            description={vacancies.length === 0
+              ? "Пока ни одна компания не опубликовала вакансии."
+              : "Попробуйте изменить параметры поиска или сбросить фильтры."}
             action={hasFilters ? { label: 'Сбросить фильтры', onClick: clearFilters } : undefined}
           />
         )}
       </main>
+
+      {selectedVacancy && (
+        <VacancyDetailModal
+          vacancy={selectedVacancy}
+          onClose={() => setSelectedVacancy(null)}
+          onViewCompany={handleViewCompany}
+        />
+      )}
+
+      {profileCompanyId && (
+        <CompanyProfileModal
+          companyId={profileCompanyId}
+          onClose={() => setProfileCompanyId(null)}
+        />
+      )}
 
       <ChatWidget />
     </div>

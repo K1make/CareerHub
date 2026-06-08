@@ -11,6 +11,7 @@ const studentNav = [
 ];
 
 const companyNav = [
+  { label: 'Вакансии', path: '/vacancies' },
   { label: 'Кандидаты', path: '/candidates' },
   { label: 'Тарифы', path: '/pricing' },
   { label: 'Профиль', path: '/profile' },
@@ -42,7 +43,7 @@ export default function AppNavbar() {
           <button
             id="navbar-logo"
             className="flex items-center gap-2.5 flex-shrink-0"
-            onClick={() => navigate(isCompany ? '/candidates' : '/companies')}
+            onClick={() => navigate(isCompany ? '/vacancies' : '/companies')}
           >
             <div className="flex items-center justify-center w-8 h-8 rounded-md bg-on-surface text-inverse-on-surface">
               <Sparkles className="w-4 h-4" />

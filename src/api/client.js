@@ -1,19 +1,8 @@
-import { companies, candidates, pricingPlans, companyPricingPlans, pythonTestQuestions } from '../data/mockData';
+import { pricingPlans, companyPricingPlans, pythonTestQuestions } from '../data/mockData';
 
 const ACCESS_TOKEN_KEY = 'careerai_access_token';
-const MOCK_DB_USERS = 'careerai_mock_users';
-
-function getMockUsers() {
-  try {
-    return JSON.parse(localStorage.getItem(MOCK_DB_USERS) || '[]');
-  } catch {
-    return [];
-  }
-}
-
-function saveMockUsers(users) {
-  localStorage.setItem(MOCK_DB_USERS, JSON.stringify(users));
-}
+const REFRESH_TOKEN_KEY = 'careerai_refresh_token';
+const API_URL = 'http://localhost:8000/api/auth';
 
 function getAccessToken() {
   return localStorage.getItem(ACCESS_TOKEN_KEY);
@@ -27,102 +16,67 @@ function setAccessToken(token) {
   }
 }
 
-const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+function setRefreshToken(token) {
+  if (token) {
+    localStorage.setItem(REFRESH_TOKEN_KEY, token);
+  } else {
+    localStorage.removeItem(REFRESH_TOKEN_KEY);
+  }
+}
 
 async function request(path, options = {}) {
-  await delay(500); // Simulate network latency
-
   const token = getAccessToken();
-  const body = options.body;
-  const method = options.method || 'GET';
+  const headers = {
+    'Content-Type': 'application/json',
+    ...(options.headers || {}),
+  };
 
-  // --- MOCK BACKEND ROUTING ---
-
-  if (path === '/register/' && method === 'POST') {
-    const users = getMockUsers();
-    if (users.find(u => u.email === body.email)) {
-      throw new Error('Пользователь с таким email уже существует');
-    }
-    const newUser = {
-      id: Date.now(),
-      email: body.email,
-      password: body.password,
-      role: body.role || 'student',
-      name: body.email.split('@')[0],
-      first_name: body.first_name || '',
-      last_name: body.last_name || '',
-    };
-    users.push(newUser);
-    saveMockUsers(users);
-    
-    const fakeToken = `mock-token-${newUser.id}`;
-    return { access: fakeToken, user: { id: newUser.id, email: newUser.email, role: newUser.role, name: newUser.name, first_name: newUser.first_name, last_name: newUser.last_name } };
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
   }
 
-  if (path === '/login/' && method === 'POST') {
-    const users = getMockUsers();
-    const user = users.find(u => u.email === body.email && u.password === body.password);
-    if (!user) {
-      throw new Error('Неверный email или пароль');
-    }
-    const fakeToken = `mock-token-${user.id}`;
-    return { access: fakeToken, user: { id: user.id, email: user.email, role: user.role, name: user.name, first_name: user.first_name, last_name: user.last_name } };
+  const response = await fetch(`${API_URL}${path}`, {
+    ...options,
+    headers,
+    body: options.body ? JSON.stringify(options.body) : undefined,
+  });
+
+  if (!response.ok) {
+    let errorMsg = 'Ошибка запроса';
+    try {
+      const errorData = await response.json();
+      errorMsg = errorData.detail || errorData.error || errorMsg;
+    } catch (e) {}
+    throw new Error(errorMsg);
   }
 
-  if (path === '/me/' && method === 'GET') {
-    if (!token) throw new Error('Unauthorized');
-    const users = getMockUsers();
-    const userId = parseInt(token.replace('mock-token-', ''));
-    const user = users.find(u => u.id === userId);
-    if (!user) throw new Error('User not found');
-    return { user: { id: user.id, email: user.email, role: user.role, name: user.name, first_name: user.first_name, last_name: user.last_name } };
+  // Handle 204 No Content
+  if (response.status === 204) {
+    return null;
   }
 
-  if (path === '/logout/' && method === 'POST') {
-    return { success: true };
-  }
-
-  if (path === '/companies/' && method === 'GET') {
-    return companies;
-  }
-
-  if (path === '/candidates/' && method === 'GET') {
-    return candidates;
-  }
-
-  if (path.startsWith('/pricing/') && method === 'GET') {
-    const url = new URL(`http://localhost${path}`);
-    const audience = url.searchParams.get('audience');
-    if (audience === 'company') return companyPricingPlans;
-    return pricingPlans;
-  }
-
-  if (path === '/tests/python/' && method === 'GET') {
-    return pythonTestQuestions;
-  }
-  
-  if (path === '/tests/python/submit/' && method === 'POST') {
-     return { score: 80, passed: true };
-  }
-  
-  if (path === '/invitations/' && method === 'POST') {
-     return { success: true };
-  }
-
-  throw new Error(`404 Not Found: ${path}`);
+  return response.json();
 }
 
 export const api = {
   getAccessToken,
   setAccessToken,
-  login(payload) {
-    return request('/login/', { method: 'POST', body: payload });
+  async login(payload) {
+    const data = await request('/login/', { method: 'POST', body: payload });
+    setAccessToken(data.access);
+    setRefreshToken(data.refresh);
+    return data;
   },
-  register(payload) {
-    return request('/register/', { method: 'POST', body: payload });
+  async register(payload) {
+    const data = await request('/register/', { method: 'POST', body: payload });
+    setAccessToken(data.access);
+    setRefreshToken(data.refresh);
+    return data;
   },
   logout() {
-    return request('/logout/', { method: 'POST' }).catch(() => null);
+    setAccessToken(null);
+    setRefreshToken(null);
+    return Promise.resolve(null);
   },
   me() {
     return request('/me/');
@@ -134,15 +88,30 @@ export const api = {
     return request('/candidates/');
   },
   pricing(audience) {
-    return request(`/pricing/?audience=${encodeURIComponent(audience)}`);
+    // Keep mock for pricing
+    if (audience === 'company') return Promise.resolve(companyPricingPlans);
+    return Promise.resolve(pricingPlans);
   },
   pythonTest() {
-    return request('/tests/python/');
+    // Keep mock for tests
+    return Promise.resolve(pythonTestQuestions);
   },
   submitPythonTest(answers) {
-    return request('/tests/python/submit/', { method: 'POST', body: { answers } });
+    return Promise.resolve({ score: 80, passed: true });
   },
   inviteCandidate(candidate) {
-    return request('/invitations/', { method: 'POST', body: { candidate } });
+    return Promise.resolve({ success: true });
+  },
+  myVacancies() {
+    return request('/my-vacancies/');
+  },
+  createVacancy(payload) {
+    return request('/my-vacancies/', { method: 'POST', body: payload });
+  },
+  allVacancies() {
+    return request('/vacancies/');
+  },
+  companyProfile(id) {
+    return request(`/companies/${id}/`);
   },
 };

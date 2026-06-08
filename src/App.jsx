@@ -5,6 +5,7 @@ import OnboardingPage from './pages/OnboardingPage';
 import { StudentRegister, JobSeekerRegister, CompanyRegister } from './pages/RegisterPage';
 import CompaniesPage from './pages/CompaniesPage';
 import CandidatesPage from './pages/CandidatesPage';
+import VacanciesPage from './pages/VacanciesPage';
 import TestPage from './pages/TestPage';
 import PricingPage from './pages/PricingPage';
 import LoginPage from './pages/LoginPage';
@@ -41,6 +42,14 @@ export default function App() {
           />
 
           {/* Company only */}
+          <Route
+            path="/vacancies"
+            element={
+              <ProtectedRoute allowedRoles={['company']}>
+                <VacanciesPage />
+              </ProtectedRoute>
+            }
+          />
           <Route
             path="/candidates"
             element={
