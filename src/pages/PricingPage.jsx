@@ -203,7 +203,7 @@ export default function PricingPage() {
         {/* Testimonials */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-12 animate-fade-in">
           {[
-            { name: 'Айдар К.', role: 'Backend Dev, Kolesa Group', text: 'Нашёл работу за 3 недели после прохождения тестов на CareerAI. Платформа сильно помогла.' },
+            { name: 'Айдар К.', role: 'Backend Dev, Kolesa Group', text: 'Нашёл работу за 3 недели после прохождения тестов на CareerHub. Платформа сильно помогла.' },
             { name: 'Динара Н.', role: 'Frontend Dev, Kaspi.kz', text: 'Pro-план окупился за первый месяц — меня заметили HR и пригласили на интервью напрямую.' },
             { name: 'Тимур А.', role: 'Data Scientist, Sergek', text: 'Верификация навыков через тесты даёт реальное преимущество перед другими кандидатами.' },
           ].map((t, i) => (

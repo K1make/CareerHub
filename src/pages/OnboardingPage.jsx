@@ -100,7 +100,7 @@ export default function OnboardingPage() {
           <div className="flex items-center justify-center w-8 h-8 rounded-md bg-on-surface text-inverse-on-surface">
             <Sparkles className="w-4 h-4" />
           </div>
-          <span className="text-lg font-semibold text-on-surface tracking-tight">CareerAI</span>
+          <span className="text-lg font-semibold text-on-surface tracking-tight">CareerHub</span>
         </div>
         <div className="flex items-center gap-4">
           <button
@@ -124,7 +124,7 @@ export default function OnboardingPage() {
             Интеллектуальный путь к <span className="text-on-surface-variant">вашей карьере</span>
           </h1>
           <p className="text-on-surface-variant text-lg md:text-xl leading-relaxed max-w-2xl mx-auto">
-            CareerAI объединяет таланты и компании с помощью верификации навыков и точного ИИ-матчинга.
+            CareerHub объединяет таланты и компании с помощью верификации навыков и точного ИИ-матчинга.
           </p>
         </div>
 

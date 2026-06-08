@@ -1,4 +1,4 @@
-// Mock data for CareerAI MVP
+// Mock data for CareerHub MVP
 
 // ─── Students / Candidates ────────────────────────────────────────────────────
 export const students = [

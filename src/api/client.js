@@ -1,7 +1,7 @@
 import { pricingPlans, companyPricingPlans, pythonTestQuestions } from '../data/mockData';
 
-const ACCESS_TOKEN_KEY = 'careerai_access_token';
-const REFRESH_TOKEN_KEY = 'careerai_refresh_token';
+const ACCESS_TOKEN_KEY = 'careerhub_access_token';
+const REFRESH_TOKEN_KEY = 'careerhub_refresh_token';
 const API_URL = 'http://localhost:8000/api/auth';
 
 function getAccessToken() {
@@ -27,9 +27,12 @@ function setRefreshToken(token) {
 async function request(path, options = {}) {
   const token = getAccessToken();
   const headers = {
-    'Content-Type': 'application/json',
     ...(options.headers || {}),
   };
+
+  if (!(options.body instanceof FormData) && !headers['Content-Type']) {
+    headers['Content-Type'] = 'application/json';
+  }
 
   if (token) {
     headers['Authorization'] = `Bearer ${token}`;
@@ -38,7 +41,7 @@ async function request(path, options = {}) {
   const response = await fetch(`${API_URL}${path}`, {
     ...options,
     headers,
-    body: options.body ? JSON.stringify(options.body) : undefined,
+    body: options.body instanceof FormData ? options.body : (options.body ? JSON.stringify(options.body) : undefined),
   });
 
   if (!response.ok) {
@@ -81,11 +84,20 @@ export const api = {
   me() {
     return request('/me/');
   },
+  updateProfile(data) {
+    return request('/me/', { method: 'PATCH', body: data });
+  },
+  deleteProfile() {
+    return request('/me/', { method: 'DELETE' });
+  },
   companies() {
     return request('/companies/');
   },
   candidates() {
     return request('/candidates/');
+  },
+  candidateProfile(id) {
+    return request(`/candidates/${id}/`);
   },
   pricing(audience) {
     // Keep mock for pricing

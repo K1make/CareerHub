@@ -3,7 +3,7 @@ from rest_framework.routers import DefaultRouter
 from .views import (
     RegisterView, LoginView, MeView,
     VacancyViewSet, CompanyListView, CandidateListView,
-    AllVacanciesView, CompanyProfileView,
+    AllVacanciesView, CompanyProfileView, CandidateProfileView,
 )
 
 router = DefaultRouter()
@@ -16,6 +16,7 @@ urlpatterns = [
     path('companies/', CompanyListView.as_view(), name='companies'),
     path('companies/<int:pk>/', CompanyProfileView.as_view(), name='company_profile'),
     path('candidates/', CandidateListView.as_view(), name='candidates'),
+    path('candidates/<int:pk>/', CandidateProfileView.as_view(), name='candidate_profile'),
     path('vacancies/', AllVacanciesView.as_view(), name='all_vacancies'),
     path('', include(router.urls)),
 ]

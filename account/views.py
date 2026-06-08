@@ -49,7 +49,7 @@ class LoginView(generics.GenericAPIView):
             
         return Response({"error": "Wrong Credentials"}, status=status.HTTP_400_BAD_REQUEST)
 
-class MeView(generics.RetrieveAPIView):
+class MeView(generics.RetrieveUpdateDestroyAPIView):
     permission_classes = [permissions.IsAuthenticated]
     serializer_class = UserSerializer
 
@@ -99,3 +99,11 @@ class CompanyProfileView(APIView):
             "company": UserSerializer(company).data,
             "vacancies": VacancySerializer(vacancies, many=True).data,
         })
+
+class CandidateProfileView(generics.RetrieveAPIView):
+    """Returns public profile of a specific candidate."""
+    serializer_class = UserSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        return User.objects.filter(role__in=['student', 'jobseeker'])

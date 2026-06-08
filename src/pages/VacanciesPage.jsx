@@ -4,6 +4,7 @@ import PageHeader from '../components/ui/PageHeader';
 import LoadingState from '../components/ui/LoadingState';
 import EmptyState from '../components/ui/EmptyState';
 import Badge from '../components/ui/Badge';
+import AppNavbar from '../components/AppNavbar';
 import { api } from '../api/client';
 
 export default function VacanciesPage() {
@@ -12,6 +13,7 @@ export default function VacanciesPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [step, setStep] = useState(1);
+  const [editingId, setEditingId] = useState(null);
 
   // Form State
   const [formData, setFormData] = useState({
@@ -45,6 +47,30 @@ export default function VacanciesPage() {
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
+  const openCreateModal = () => {
+    setEditingId(null);
+    setFormData({
+      title: '', department: '', location: '', salary: '', type: 'Полная занятость', description: '', requirements: '',
+    });
+    setStep(1);
+    setIsModalOpen(true);
+  };
+
+  const openEditModal = (vacancy) => {
+    setEditingId(vacancy.id);
+    setFormData({
+      title: vacancy.title || '',
+      department: vacancy.department || '',
+      location: vacancy.location || '',
+      salary: vacancy.salary || '',
+      type: vacancy.type || 'Полная занятость',
+      description: vacancy.description || '',
+      requirements: vacancy.requirements ? vacancy.requirements.join('\n') : '',
+    });
+    setStep(1);
+    setIsModalOpen(true);
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (step < 3) {
@@ -53,11 +79,18 @@ export default function VacanciesPage() {
     }
     try {
       setIsSubmitting(true);
-      const newVacancy = await api.createVacancy({
+      const payload = {
         ...formData,
         requirements: formData.requirements.split('\n').filter(r => r.trim() !== '')
-      });
-      setVacancies(prev => [newVacancy, ...prev]);
+      };
+
+      if (editingId) {
+        const updatedVacancy = await api.updateVacancy(editingId, payload);
+        setVacancies(prev => prev.map(v => v.id === editingId ? updatedVacancy : v));
+      } else {
+        const newVacancy = await api.createVacancy(payload);
+        setVacancies(prev => [newVacancy, ...prev]);
+      }
       setIsModalOpen(false);
       setStep(1);
       setFormData({
@@ -78,6 +111,7 @@ export default function VacanciesPage() {
 
   return (
     <div className="min-h-screen bg-background">
+      <AppNavbar />
       <div className="max-w-7xl mx-auto px-4 sm:px-6 py-12">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
           <PageHeader
@@ -87,7 +121,7 @@ export default function VacanciesPage() {
             subtitle="Создавайте и управляйте вакансиями вашей компании."
           />
           <button
-            onClick={() => setIsModalOpen(true)}
+            onClick={openCreateModal}
             className="btn-primary"
           >
             <Plus className="w-4 h-4 mr-2" />
@@ -104,7 +138,7 @@ export default function VacanciesPage() {
             description="Создайте первую вакансию, чтобы начать поиск талантов."
             action={{
               label: "Создать вакансию",
-              onClick: () => setIsModalOpen(true)
+              onClick: openCreateModal
             }}
           />
         ) : (
@@ -141,7 +175,7 @@ export default function VacanciesPage() {
                 
                 <div className="pt-4 border-t border-outline-variant/30 flex justify-between items-center">
                   <span className="text-sm font-medium text-primary">Активна</span>
-                  <button className="text-sm font-medium text-on-surface-variant hover:text-on-surface transition-colors">
+                  <button onClick={() => openEditModal(vacancy)} className="text-sm font-medium text-on-surface-variant hover:text-on-surface transition-colors">
                     Редактировать
                   </button>
                 </div>
@@ -156,7 +190,9 @@ export default function VacanciesPage() {
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 bg-black/50 backdrop-blur-sm animate-fade-in">
           <div className="bg-surface w-full max-w-2xl rounded-2xl shadow-xl overflow-hidden flex flex-col max-h-full">
             <div className="flex items-center justify-between p-6 border-b border-outline-variant/30">
-              <h2 className="text-xl font-bold text-on-surface">Создать вакансию</h2>
+              <h2 className="text-xl font-bold text-on-surface">
+                {editingId ? 'Редактировать вакансию' : 'Создать вакансию'}
+              </h2>
               <button
                 onClick={() => { setIsModalOpen(false); setStep(1); }}
                 className="p-2 -mr-2 rounded-lg text-on-surface-variant hover:bg-surface-container transition-colors"
@@ -291,7 +327,7 @@ export default function VacanciesPage() {
                 className="btn-primary"
                 disabled={isSubmitting}
               >
-                {step < 3 ? 'Далее' : (isSubmitting ? 'Сохранение...' : 'Опубликовать вакансию')}
+                {step < 3 ? 'Далее' : (isSubmitting ? 'Сохранение...' : (editingId ? 'Сохранить изменения' : 'Опубликовать вакансию'))}
               </button>
             </div>
           </div>

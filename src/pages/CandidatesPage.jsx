@@ -3,6 +3,7 @@ import {
   MapPin, Search, Mail, CheckCircle2, SlidersHorizontal,
   X, Users, Briefcase, Star, RefreshCw, GraduationCap, UserCircle
 } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import AppNavbar from '../components/AppNavbar';
 import ChatWidget from '../components/ChatWidget';
 import EmptyState from '../components/ui/EmptyState';
@@ -26,6 +27,7 @@ function RoleBadge({ role }) {
 }
 
 function CandidateCard({ candidate }) {
+  const navigate = useNavigate();
   const [invited, setInvited] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
@@ -81,7 +83,7 @@ function CandidateCard({ candidate }) {
       </div>
 
       {/* AI Rating placeholder */}
-      <div className="pt-3 border-t border-outline-variant/40 mb-4">
+      <div className="pt-3 border-t border-outline-variant/40 mb-4 mt-auto">
         <div className="flex items-center justify-between mb-1.5">
           <span className="text-[10px] font-semibold text-outline uppercase tracking-wider flex items-center gap-1">
             <Star className="w-3 h-3" /> ИИ-оценка
@@ -94,18 +96,27 @@ function CandidateCard({ candidate }) {
       </div>
 
       {/* CTA */}
-      <button
-        className={`w-full text-xs py-2 flex items-center justify-center gap-2 rounded-lg border font-medium transition-all duration-200 ${
-          invited
-            ? 'bg-tertiary/10 text-tertiary border-tertiary/20 cursor-default'
-            : 'btn-primary'
-        }`}
-        onClick={invite}
-        disabled={invited || submitting}
-      >
-        <Mail className="w-3.5 h-3.5" />
-        {invited ? 'Приглашение отправлено ✓' : submitting ? 'Отправка...' : 'Пригласить на собеседование'}
-      </button>
+      {/* CTA */}
+      <div className="flex flex-col gap-2">
+        <button
+          className="w-full text-xs py-2 flex items-center justify-center gap-2 rounded-lg border font-medium transition-all duration-200 btn-secondary"
+          onClick={() => navigate(`/candidates/${candidate.id}`)}
+        >
+          <UserCircle className="w-3.5 h-3.5" /> Посмотреть профиль
+        </button>
+        <button
+          className={`w-full text-xs py-2 flex items-center justify-center gap-2 rounded-lg border font-medium transition-all duration-200 ${
+            invited
+              ? 'bg-tertiary/10 text-tertiary border-tertiary/20 cursor-default'
+              : 'btn-primary'
+          }`}
+          onClick={invite}
+          disabled={invited || submitting}
+        >
+          <Mail className="w-3.5 h-3.5" />
+          {invited ? 'Приглашение отправлено ✓' : submitting ? 'Отправка...' : 'Пригласить на собеседование'}
+        </button>
+      </div>
     </div>
   );
 }

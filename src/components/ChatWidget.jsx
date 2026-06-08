@@ -25,7 +25,7 @@ const getBotResponse = (text) => {
   }
 
   return {
-    text: 'Хороший вопрос! В данный момент я анализирую профиль и возможности нашей базы CareerAI. Как ИИ-ассистент, я помогу вам подготовиться к интервью или выбрать оптимальный путь развития. Чем еще могу быть полезен?'
+    text: 'Хороший вопрос! В данный момент я анализирую профиль и возможности нашей базы CareerHub. Как ИИ-ассистент, я помогу вам подготовиться к интервью или выбрать оптимальный путь развития. Чем еще могу быть полезен?'
   };
 };
 
@@ -181,7 +181,7 @@ export default function ChatWidget() {
               </div>
               <div>
                 <p className="text-sm font-semibold text-on-surface">ИИ-Консультант</p>
-                <p className="text-xs text-on-surface-variant">Онлайн · CareerAI</p>
+                <p className="text-xs text-on-surface-variant">Онлайн · CareerHub</p>
               </div>
             </div>
             <button

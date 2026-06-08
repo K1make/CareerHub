@@ -19,6 +19,18 @@ class User(AbstractUser):
     student_id = models.CharField(max_length=100, blank=True, null=True)
     university = models.CharField(max_length=255, blank=True, null=True)
 
+    # Profile fields
+    about = models.TextField(blank=True, null=True)
+    skills = models.JSONField(default=list, blank=True)
+    education_info = models.TextField(blank=True, null=True)
+    diploma_file = models.FileField(upload_to='diplomas/', blank=True, null=True)
+    phone = models.CharField(max_length=20, blank=True, null=True)
+    github_url = models.URLField(blank=True, null=True)
+    experience = models.JSONField(default=list, blank=True)  # [{company, role, period, desc}]
+    projects = models.JSONField(default=list, blank=True)    # [{name, desc, tech:[]}]
+    test_results = models.JSONField(default=list, blank=True) # [{tech, level, score, date}]
+    profile_completed = models.BooleanField(default=False)
+
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = ['username']
     

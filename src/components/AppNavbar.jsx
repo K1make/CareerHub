@@ -48,7 +48,7 @@ export default function AppNavbar() {
             <div className="flex items-center justify-center w-8 h-8 rounded-md bg-on-surface text-inverse-on-surface">
               <Sparkles className="w-4 h-4" />
             </div>
-            <span className="text-base font-semibold text-on-surface">CareerAI</span>
+            <span className="text-base font-semibold text-on-surface">CareerHub</span>
           </button>
 
           {/* Desktop nav */}

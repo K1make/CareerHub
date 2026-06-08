@@ -7,7 +7,7 @@ class UserSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields = ('id', 'username', 'email', 'role', 'first_name', 'last_name', 'name', 'university', 'student_id')
+        fields = ('id', 'username', 'email', 'role', 'first_name', 'last_name', 'name', 'university', 'student_id', 'about', 'skills', 'education_info', 'diploma_file', 'phone', 'github_url', 'experience', 'projects', 'test_results', 'profile_completed')
 
     def get_name(self, obj):
         if obj.first_name or obj.last_name:

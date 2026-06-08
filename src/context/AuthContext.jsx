@@ -2,7 +2,7 @@ import { createContext, useContext, useEffect, useState } from 'react';
 import { api } from '../api/client';
 
 const AuthContext = createContext();
-const USER_KEY = 'careerai_user';
+const USER_KEY = 'careerhub_user';
 
 function normalizeUser(user) {
   if (!user) return null;
@@ -83,11 +83,23 @@ export function AuthProvider({ children }) {
     setUser(null);
   };
 
+  const deleteProfile = async () => {
+    await api.deleteProfile();
+    api.setAccessToken(null);
+    persistUser(null);
+    setUser(null);
+  };
+
+  const updateUser = (newData) => {
+    const updated = { ...user, ...newData };
+    setUser(persistUser(updated));
+  };
+
   const isStudent = user?.role === 'student' || user?.role === 'jobseeker';
   const isCompany = user?.role === 'company';
 
   return (
-    <AuthContext.Provider value={{ user, login, register, logout, loading, isStudent, isCompany }}>
+    <AuthContext.Provider value={{ user, login, register, logout, deleteProfile, updateUser, loading, isStudent, isCompany }}>
       {children}
     </AuthContext.Provider>
   );
