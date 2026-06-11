@@ -11,6 +11,7 @@ import PricingPage from './pages/PricingPage';
 import LoginPage from './pages/LoginPage';
 import ProfilePage from './pages/ProfilePage';
 import CandidateProfilePage from './pages/CandidateProfilePage';
+import CompanyProfilePage from './pages/CompanyProfilePage';
 
 export default function App() {
   return (
@@ -30,6 +31,14 @@ export default function App() {
             element={
               <ProtectedRoute allowedRoles={['student', 'jobseeker']}>
                 <CompaniesPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/companies/:id"
+            element={
+              <ProtectedRoute allowedRoles={['student', 'jobseeker']}>
+                <CompanyProfilePage />
               </ProtectedRoute>
             }
           />

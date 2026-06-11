@@ -1,4 +1,5 @@
 import { useState, useMemo, useEffect, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   MapPin, Search, Briefcase, Building2, X,
   SlidersHorizontal, Clock, DollarSign, RefreshCw, ExternalLink
@@ -11,94 +12,6 @@ import PageHeader from '../components/ui/PageHeader';
 import { api } from '../api/client';
 
 const REFRESH_INTERVAL = 30_000;
-
-// ─── Company Profile Modal ─────────────────────────────────────────────────────
-function CompanyProfileModal({ companyId, onClose }) {
-  const [data, setData] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
-
-  useEffect(() => {
-    let active = true;
-    api.companyProfile(companyId)
-      .then(d => { if (active) setData(d); })
-      .catch(e => { if (active) setError(e.message); })
-      .finally(() => { if (active) setLoading(false); });
-    return () => { active = false; };
-  }, [companyId]);
-
-  const initials = data?.company?.name
-    ? data.company.name.split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2)
-    : '??';
-
-  return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 bg-black/60 backdrop-blur-sm animate-fade-in"
-      onClick={e => e.target === e.currentTarget && onClose()}
-    >
-      <div className="bg-surface w-full max-w-2xl rounded-2xl shadow-xl overflow-hidden flex flex-col max-h-[90vh]">
-        <div className="flex items-center justify-between p-6 border-b border-outline-variant/30">
-          <h2 className="text-xl font-bold text-on-surface">Профиль компании</h2>
-          <button
-            onClick={onClose}
-            className="p-2 -mr-2 rounded-lg text-on-surface-variant hover:bg-surface-container transition-colors"
-          >
-            <X className="w-5 h-5" />
-          </button>
-        </div>
-
-        <div className="overflow-y-auto flex-1 p-6">
-          {loading && <LoadingState count={3} />}
-          {error && <div className="alert-error text-xs">{error}</div>}
-          {data && (
-            <div className="space-y-6">
-              {/* Company header */}
-              <div className="flex items-center gap-4">
-                <div className="w-16 h-16 rounded-2xl bg-primary/10 border border-primary/20 flex items-center justify-center text-primary font-bold text-xl flex-shrink-0">
-                  {initials}
-                </div>
-                <div>
-                  <h3 className="text-lg font-semibold text-on-surface">{data.company.name}</h3>
-                  <p className="text-sm text-on-surface-variant">{data.company.email}</p>
-                  <span className="badge badge-indigo mt-1">Компания</span>
-                </div>
-              </div>
-
-              {/* Vacancies */}
-              <div>
-                <h4 className="text-sm font-semibold text-on-surface mb-3 flex items-center gap-2">
-                  <Briefcase className="w-4 h-4 text-primary" />
-                  Открытые вакансии ({data.vacancies.length})
-                </h4>
-                {data.vacancies.length === 0 ? (
-                  <p className="text-sm text-on-surface-variant">Нет открытых вакансий.</p>
-                ) : (
-                  <div className="space-y-3">
-                    {data.vacancies.map(v => (
-                      <div key={v.id} className="glass-card p-4">
-                        <div className="flex items-start justify-between gap-2 mb-2">
-                          <h5 className="font-medium text-on-surface text-sm">{v.title}</h5>
-                          <span className="badge badge-indigo text-[10px] whitespace-nowrap">{v.type}</span>
-                        </div>
-                        <div className="flex flex-wrap gap-3 text-xs text-on-surface-variant">
-                          <span className="flex items-center gap-1"><MapPin className="w-3 h-3" />{v.location}</span>
-                          {v.salary && <span className="flex items-center gap-1"><DollarSign className="w-3 h-3" />{v.salary}</span>}
-                        </div>
-                        {v.description && (
-                          <p className="text-xs text-on-surface-variant mt-2 line-clamp-2">{v.description}</p>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            </div>
-          )}
-        </div>
-      </div>
-    </div>
-  );
-}
 
 // ─── Vacancy Detail Modal ──────────────────────────────────────────────────────
 function VacancyDetailModal({ vacancy, onClose, onViewCompany }) {
@@ -254,11 +167,11 @@ export default function CompaniesPage() {
   const [search, setSearch] = useState('');
   const [jobType, setJobType] = useState('Все');
   const [showFilters, setShowFilters] = useState(false);
+  const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [vacancies, setVacancies] = useState([]);
   const [error, setError] = useState('');
   const [selectedVacancy, setSelectedVacancy] = useState(null);
-  const [profileCompanyId, setProfileCompanyId] = useState(null);
   const [lastRefresh, setLastRefresh] = useState(null);
 
   const loadVacancies = useCallback(async () => {
@@ -297,7 +210,7 @@ export default function CompaniesPage() {
 
   const handleViewCompany = (id) => {
     setSelectedVacancy(null);
-    setProfileCompanyId(id);
+    navigate(`/companies/${id}`);
   };
 
   return (
@@ -405,12 +318,6 @@ export default function CompaniesPage() {
         />
       )}
 
-      {profileCompanyId && (
-        <CompanyProfileModal
-          companyId={profileCompanyId}
-          onClose={() => setProfileCompanyId(null)}
-        />
-      )}
 
       <ChatWidget />
     </div>

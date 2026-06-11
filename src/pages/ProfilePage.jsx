@@ -532,7 +532,6 @@ function CompanyProfile({ name, onDelete }) {
 
   return (
     <div className="max-w-5xl mx-auto px-4 sm:px-6 py-10 animate-slide-up space-y-6">
-      {showOnboarding && <OnboardingModal user={user} updateUser={updateUser} onClose={() => {}} />}
       {/* Hero */}
       <div className="bg-surface border border-outline-variant rounded-2xl overflow-hidden">
         <div className="h-24 bg-gradient-to-r from-surface-container to-surface-container-high" />
