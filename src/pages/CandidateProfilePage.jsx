@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
-  GraduationCap, MapPin, Mail, Briefcase, Award, Code2, BookOpen, CheckCircle2, ArrowLeft, UserCircle
+  GraduationCap, MapPin, Briefcase, Award, Code2, BookOpen, CheckCircle2, ArrowLeft, UserCircle
 } from 'lucide-react';
 import AppNavbar from '../components/AppNavbar';
 import LoadingState from '../components/ui/LoadingState';
@@ -15,6 +15,7 @@ export default function CandidateProfilePage() {
   const [error, setError] = useState('');
   const [invited, setInvited] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [contacts, setContacts] = useState(null);
 
   useEffect(() => {
     async function load() {
@@ -29,6 +30,11 @@ export default function CandidateProfilePage() {
     }
     load();
   }, [id]);
+
+  useEffect(() => {
+    if (!candidate?.contacts_available) return;
+    api.candidateContacts(id).then(setContacts).catch(() => setContacts(null));
+  }, [candidate?.contacts_available, id]);
 
   if (loading) {
     return (
@@ -55,7 +61,7 @@ export default function CandidateProfilePage() {
 
   const initials = candidate.name
     ? candidate.name.split(' ').slice(0, 2).map(w => w[0]).join('').toUpperCase()
-    : (candidate.email?.[0] || '?').toUpperCase();
+    : '?';
 
   const invite = async () => {
     if (invited || submitting) return;
@@ -70,27 +76,18 @@ export default function CandidateProfilePage() {
     }
   };
 
-  // Mock data for MVP
-  const mySkills = candidate.skills?.length ? candidate.skills : ['Python', 'Django', 'PostgreSQL', 'Docker'];
+  const mySkills = candidate.skills || [];
   const about = candidate.about || 'Backend-разработчик с фокусом на Python и Django. Активно изучаю DevOps-практики и облачные технологии. Ищу позицию Junior/Middle Backend Developer в продуктовой компании.';
   
-  const testResults = [
-    { tech: 'Python', level: 'Middle', score: 82, date: 'Май 2026' },
-    { tech: 'PostgreSQL', level: 'Junior', score: 74, date: 'Апр 2026' },
-  ];
+  const testResults = candidate.test_results || [];
 
   const education = [
     { school: candidate.university || 'МУИТ (IITU)', degree: 'Бакалавр — Информационные технологии', years: '2022–2026', gpa: '3.3' },
   ];
 
-  const experience = [
-    { company: 'Kolesa Group', role: 'Backend Intern', period: 'Июнь–Авг 2025', desc: 'Разрабатывал REST API на Django, участвовал в code review, написал юнит-тесты.' },
-  ];
+  const experience = candidate.experience || [];
 
-  const projects = [
-    { name: 'CareerHub', desc: 'AI-платформа для матчинга студентов и работодателей.', tech: ['React', 'Python', 'FastAPI'] },
-    { name: 'Budget Tracker', desc: 'Телеграм-бот для учёта личных финансов.', tech: ['Python', 'PostgreSQL'] },
-  ];
+  const projects = candidate.projects || [];
 
   return (
     <div className="min-h-screen bg-background pb-12">
@@ -122,13 +119,13 @@ export default function CandidateProfilePage() {
             <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
               <div>
                 <div className="flex items-center gap-3 mb-2 flex-wrap">
-                  <h1 className="text-2xl font-bold text-on-surface tracking-tight">{candidate.name || candidate.email}</h1>
+                  <h1 className="text-2xl font-bold text-on-surface tracking-tight">{candidate.name || 'Кандидат'}</h1>
                   {candidate.role === 'student' ? (
                     <span className="badge badge-indigo">Студент</span>
                   ) : (
                     <span className="badge badge-outline">Соискатель</span>
                   )}
-                  <span className="badge badge-green">Junior</span>
+                  {candidate.specialization && <span className="badge badge-green">{candidate.specialization}</span>}
                 </div>
                 <div className="flex flex-wrap gap-4 text-sm text-on-surface-variant">
                   {candidate.role === 'student' && (
@@ -140,13 +137,10 @@ export default function CandidateProfilePage() {
                   {candidate.student_id && (
                     <span className="flex items-center gap-1.5"><Briefcase className="w-4 h-4" />ID: {candidate.student_id}</span>
                   )}
-                  <span className="flex items-center gap-1.5"><MapPin className="w-4 h-4" />Алматы</span>
+                  {candidate.city && <span className="flex items-center gap-1.5"><MapPin className="w-4 h-4" />{candidate.city}</span>}
                 </div>
               </div>
               <div className="flex items-center gap-2">
-                <a href={`mailto:${candidate.email}`} className="btn-secondary text-xs py-2 px-3">
-                  <Mail className="w-3.5 h-3.5" /> Написать
-                </a>
                 <button
                   className={`btn-primary text-xs py-2 px-3 flex items-center gap-2 ${invited ? '!bg-tertiary/20 !text-tertiary !border-tertiary/20' : ''}`}
                   onClick={invite}
@@ -184,7 +178,7 @@ export default function CandidateProfilePage() {
                     </div>
                     <div>
                       <div className="font-semibold text-on-surface text-sm">{ex.role}</div>
-                      <div className="text-xs text-on-surface-variant mb-1">{ex.company} · {ex.period}</div>
+                      <div className="text-xs text-on-surface-variant/80 mb-1">{ex.company} · {ex.start_date}{ex.is_current ? ' — по настоящее время' : ex.end_date ? ` — ${ex.end_date}` : ''}</div>
                       <p className="text-xs text-on-surface-variant leading-relaxed">{ex.desc}</p>
                     </div>
                   </div>
@@ -213,6 +207,16 @@ export default function CandidateProfilePage() {
 
           {/* Right column */}
           <div className="space-y-6">
+            {contacts && (
+              <div className="glass-card p-6">
+                <h2 className="text-base font-semibold text-on-surface mb-3">Контакты</h2>
+                <div className="space-y-2 text-sm text-on-surface-variant">
+                  {contacts.email && <div>{contacts.email}</div>}
+                  {contacts.phone && <div>{contacts.phone}</div>}
+                  {contacts.github_url && <a href={contacts.github_url} target="_blank" rel="noreferrer" className="text-primary hover:underline">GitHub</a>}
+                </div>
+              </div>
+            )}
             {/* Skills */}
             <div className="glass-card p-6">
               <h2 className="text-base font-semibold text-on-surface flex items-center gap-2 mb-4">

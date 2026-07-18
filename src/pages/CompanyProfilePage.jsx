@@ -112,12 +112,6 @@ export default function CompanyProfilePage() {
                   )}
                 </div>
               </div>
-              <button
-                onClick={() => window.location.assign(`mailto:${company.email}`)}
-                className="btn-primary"
-              >
-                Написать компании
-              </button>
             </div>
           </div>
         </div>

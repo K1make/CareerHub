@@ -71,7 +71,8 @@ function StudentRegister() {
           university: form.university,
           student_id: form.studentId,
         });
-        navigate('/companies');
+        // Registration also logs the user in. Open the student's main workspace.
+        navigate('/vacancies-public', { replace: true });
       } catch (err) {
         setErrors({ form: err.message });
       } finally {
@@ -283,7 +284,8 @@ function JobSeekerRegister() {
         email: form.email,
         password: form.password,
       });
-      navigate('/companies');
+      // Registration also logs the user in. Open the job seeker's main workspace.
+      navigate('/vacancies-public', { replace: true });
     } catch (err) {
       setErrors({ form: err.message });
     } finally {
@@ -435,7 +437,8 @@ function CompanyRegister() {
         email: form.email,
         password: form.password,
       });
-      navigate('/candidates');
+      // Registration also logs the user in. Open the company's main workspace.
+      navigate('/candidates', { replace: true });
     } catch (err) {
       setErrors({ form: err.message });
     } finally {

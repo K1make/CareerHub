@@ -12,6 +12,8 @@ import LoginPage from './pages/LoginPage';
 import ProfilePage from './pages/ProfilePage';
 import CandidateProfilePage from './pages/CandidateProfilePage';
 import CompanyProfilePage from './pages/CompanyProfilePage';
+import PublicVacanciesPage from './pages/PublicVacanciesPage';
+import PublicVacancyDetailPage from './pages/PublicVacancyDetailPage';
 
 export default function App() {
   return (
@@ -34,6 +36,8 @@ export default function App() {
               </ProtectedRoute>
             }
           />
+          <Route path="/vacancies-public" element={<ProtectedRoute allowedRoles={['student', 'jobseeker']}><PublicVacanciesPage /></ProtectedRoute>} />
+          <Route path="/vacancies/:id" element={<ProtectedRoute allowedRoles={['student', 'jobseeker']}><PublicVacancyDetailPage /></ProtectedRoute>} />
           <Route
             path="/companies/:id"
             element={
@@ -78,14 +82,7 @@ export default function App() {
           />
 
           {/* Shared (any authenticated role) */}
-          <Route
-            path="/pricing"
-            element={
-              <ProtectedRoute allowedRoles={['student', 'jobseeker', 'company']}>
-                <PricingPage />
-              </ProtectedRoute>
-            }
-          />
+          <Route path="/pricing" element={<ProtectedRoute allowedRoles={['company']}><PricingPage /></ProtectedRoute>} />
           <Route
             path="/profile"
             element={

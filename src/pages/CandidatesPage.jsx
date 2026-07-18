@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect, useCallback } from 'react';
 import {
-  MapPin, Search, Mail, CheckCircle2, SlidersHorizontal,
+  MapPin, Search, CheckCircle2, SlidersHorizontal,
   X, Users, Briefcase, Star, RefreshCw, GraduationCap, UserCircle
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
@@ -33,7 +33,7 @@ function CandidateCard({ candidate }) {
 
   const initials = candidate.name
     ? candidate.name.split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2)
-    : (candidate.email?.[0] || '?').toUpperCase();
+    : '?';
 
   const invite = async () => {
     if (invited || submitting) return;
@@ -58,10 +58,10 @@ function CandidateCard({ candidate }) {
           </div>
           <div className="min-w-0">
             <h3 className="font-semibold text-on-surface text-sm leading-tight truncate">
-              {candidate.name || candidate.email}
+              {candidate.name || 'Кандидат'}
             </h3>
             <p className="text-xs text-on-surface-variant truncate">
-              {candidate.university || candidate.email}
+              {candidate.specialization || candidate.university || 'Специализация не указана'}
             </p>
           </div>
         </div>
@@ -69,17 +69,8 @@ function CandidateCard({ candidate }) {
       </div>
 
       {/* Info */}
-      <div className="flex flex-wrap gap-3 text-xs text-on-surface-variant mb-4">
-        <span className="flex items-center gap-1.5">
-          <Mail className="w-3.5 h-3.5" />
-          {candidate.email}
-        </span>
-        {candidate.student_id && (
-          <span className="flex items-center gap-1.5">
-            <Briefcase className="w-3.5 h-3.5" />
-            ID: {candidate.student_id}
-          </span>
-        )}
+      <div className="flex flex-wrap gap-1.5 text-xs text-on-surface-variant mb-4">
+        {(candidate.skills || []).slice(0, 4).map(skill => <span key={skill} className="skill-tag">{skill}</span>)}
       </div>
 
       {/* AI Rating placeholder */}
@@ -142,6 +133,7 @@ const ROLE_LABELS = { 'Все': 'Все', 'student': 'Студент', 'jobseeke
 export default function CandidatesPage() {
   const [search, setSearch] = useState('');
   const [role, setRole] = useState('Все');
+  const [skills, setSkills] = useState([]);
   const [showFilters, setShowFilters] = useState(false);
   const [loading, setLoading] = useState(true);
   const [candidates, setCandidates] = useState([]);
@@ -150,7 +142,7 @@ export default function CandidatesPage() {
 
   const loadCandidates = useCallback(async () => {
     try {
-      const data = await api.candidates();
+      const data = await api.candidates(skills);
       setCandidates(data);
       setError('');
       setLastRefresh(new Date());
@@ -159,7 +151,7 @@ export default function CandidatesPage() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [skills]);
 
   useEffect(() => {
     loadCandidates();
@@ -173,15 +165,16 @@ export default function CandidatesPage() {
       const q = search.toLowerCase();
       const matchSearch = !q ||
         (c.name || '').toLowerCase().includes(q) ||
-        (c.email || '').toLowerCase().includes(q) ||
+        (c.specialization || '').toLowerCase().includes(q) ||
         (c.university || '').toLowerCase().includes(q);
       const matchRole = role === 'Все' || c.role === role;
       return matchSearch && matchRole;
     });
   }, [search, role, candidates]);
 
-  const hasFilters = role !== 'Все' || search;
-  const clearFilters = () => { setSearch(''); setRole('Все'); };
+  const allSkills = [...new Set(candidates.flatMap(c => c.skills || []))].sort();
+  const hasFilters = role !== 'Все' || search || skills.length > 0;
+  const clearFilters = () => { setSearch(''); setRole('Все'); setSkills([]); };
 
   return (
     <div className="min-h-screen bg-background">
@@ -248,6 +241,12 @@ export default function CandidatesPage() {
                 {ROLES.map(v => (
                   <FilterChip key={v} label={ROLE_LABELS[v]} active={role === v} onClick={() => setRole(v)} />
                 ))}
+              </div>
+            </div>
+            <div>
+              <p className="section-label mb-2">Навыки</p>
+              <div className="flex flex-wrap gap-2">
+                {allSkills.length ? allSkills.map(skill => <FilterChip key={skill} label={skill} active={skills.includes(skill)} onClick={() => setSkills(prev => prev.includes(skill) ? prev.filter(item => item !== skill) : [...prev, skill])} />) : <span className="text-xs text-outline">Навыки появятся после заполнения профилей.</span>}
               </div>
             </div>
             {hasFilters && (

@@ -14,6 +14,10 @@ export default function VacanciesPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [step, setStep] = useState(1);
   const [editingId, setEditingId] = useState(null);
+  const [statusFilter, setStatusFilter] = useState('all');
+  const [applicationCounts, setApplicationCounts] = useState({});
+  const [expandedApplications, setExpandedApplications] = useState(null);
+  const [applications, setApplications] = useState([]);
 
   // Form State
   const [formData, setFormData] = useState({
@@ -22,6 +26,7 @@ export default function VacanciesPage() {
     location: '',
     salary: '',
     type: 'Полная занятость',
+    is_active: true,
     description: '',
     requirements: '',
   });
@@ -35,11 +40,26 @@ export default function VacanciesPage() {
       setIsLoading(true);
       const data = await api.myVacancies();
       setVacancies(data);
+      const counts = await Promise.all(data.map(async vacancy => {
+        try { return [vacancy.id, (await api.vacancyApplications(vacancy.id)).length]; } catch { return [vacancy.id, 0]; }
+      }));
+      setApplicationCounts(Object.fromEntries(counts));
     } catch (error) {
       console.error('Ошибка при загрузке вакансий', error);
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const filteredVacancies = vacancies.filter(vacancy => statusFilter === 'all' || (statusFilter === 'active' ? vacancy.is_active : !vacancy.is_active));
+  const toggleApplications = async (vacancyId) => {
+    if (expandedApplications === vacancyId) { setExpandedApplications(null); return; }
+    setApplications(await api.vacancyApplications(vacancyId));
+    setExpandedApplications(vacancyId);
+  };
+  const updateApplicationStatus = async (vacancyId, applicationId, status) => {
+    const updated = await api.updateApplicationStatus(vacancyId, applicationId, status);
+    setApplications(previous => previous.map(item => item.id === updated.id ? updated : item));
   };
 
   const handleChange = (e) => {
@@ -50,7 +70,7 @@ export default function VacanciesPage() {
   const openCreateModal = () => {
     setEditingId(null);
     setFormData({
-      title: '', department: '', location: '', salary: '', type: 'Полная занятость', description: '', requirements: '',
+      title: '', department: '', location: '', salary: '', type: 'Полная занятость', description: '', requirements: '', is_active: true,
     });
     setStep(1);
     setIsModalOpen(true);
@@ -66,6 +86,7 @@ export default function VacanciesPage() {
       type: vacancy.type || 'Полная занятость',
       description: vacancy.description || '',
       requirements: vacancy.requirements ? vacancy.requirements.join('\n') : '',
+      is_active: vacancy.is_active !== false,
     });
     setStep(1);
     setIsModalOpen(true);
@@ -98,7 +119,7 @@ export default function VacanciesPage() {
         department: '',
         location: '',
         salary: '',
-        type: 'Полная занятость',
+        type: 'Полная занятость', is_active: true,
         description: '',
         requirements: '',
       });
@@ -128,10 +149,13 @@ export default function VacanciesPage() {
             Создать вакансию
           </button>
         </div>
+        <div className="flex gap-2 mb-6">
+          {[['all', 'Все'], ['active', 'Активные'], ['passive', 'Пассивные']].map(([value, label]) => <button key={value} onClick={() => setStatusFilter(value)} className={statusFilter === value ? 'btn-primary text-xs py-2 px-3' : 'btn-secondary text-xs py-2 px-3'}>{label}</button>)}
+        </div>
 
         {isLoading ? (
           <LoadingState text="Загрузка вакансий..." />
-        ) : vacancies.length === 0 ? (
+        ) : filteredVacancies.length === 0 ? (
           <EmptyState
             icon={Briefcase}
             title="У вас пока нет вакансий"
@@ -143,7 +167,7 @@ export default function VacanciesPage() {
           />
         ) : (
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {vacancies.map((vacancy) => (
+            {filteredVacancies.map((vacancy) => (
               <div key={vacancy.id} className="card p-6 flex flex-col group hover:border-primary/30 transition-colors">
                 <div className="flex-1">
                   <div className="flex justify-between items-start mb-4">
@@ -168,17 +192,19 @@ export default function VacanciesPage() {
                     )}
                     <div className="flex items-center text-sm text-on-surface-variant">
                       <Clock className="w-4 h-4 mr-2 text-outline" />
-                      {new Date(vacancy.createdAt).toLocaleDateString('ru-RU')}
+                      {new Date(vacancy.created_at || vacancy.createdAt).toLocaleDateString('ru-RU')}
                     </div>
+                    <div className="text-xs text-on-surface-variant">Откликов: {applicationCounts[vacancy.id] ?? 0}</div>
                   </div>
                 </div>
                 
                 <div className="pt-4 border-t border-outline-variant/30 flex justify-between items-center">
-                  <span className="text-sm font-medium text-primary">Активна</span>
-                  <button onClick={() => openEditModal(vacancy)} className="text-sm font-medium text-on-surface-variant hover:text-on-surface transition-colors">
-                    Редактировать
+                  <button onClick={() => api.updateVacancy(vacancy.id, { is_active: !vacancy.is_active }).then(updated => setVacancies(prev => prev.map(v => v.id === updated.id ? updated : v)))} className={`text-sm font-medium ${vacancy.is_active ? 'text-primary' : 'text-outline'}`}>
+                    {vacancy.is_active ? 'Активна' : 'Пассивна'}
                   </button>
+                  <div className="flex gap-3"><button onClick={() => toggleApplications(vacancy.id)} className="text-sm font-medium text-primary">Отклики</button><button onClick={() => openEditModal(vacancy)} className="text-sm font-medium text-on-surface-variant hover:text-on-surface transition-colors">Редактировать</button></div>
                 </div>
+                {expandedApplications === vacancy.id && <div className="pt-4 mt-4 border-t border-outline-variant/30 space-y-2"><p className="text-xs font-semibold text-on-surface">Отклики кандидатов</p>{applications.length ? applications.map(application => <div key={application.id} className="flex items-center justify-between gap-2 text-xs bg-surface-container p-2 rounded-lg"><span className="text-on-surface">{application.candidate?.name || 'Кандидат'}</span><select value={application.status} onChange={event => updateApplicationStatus(vacancy.id, application.id, event.target.value)} className="input-field py-1 text-xs w-auto"><option value="pending">Новый</option><option value="reviewing">На рассмотрении</option><option value="rejected">Отклонён</option><option value="hired">Нанят</option></select></div>) : <p className="text-xs text-on-surface-variant">Пока нет откликов.</p>}</div>}
               </div>
             ))}
           </div>
@@ -268,10 +294,17 @@ export default function VacanciesPage() {
                           <option value="Полная занятость">Полная занятость</option>
                           <option value="Частичная занятость">Частичная занятость</option>
                           <option value="Стажировка">Стажировка</option>
+                          <option value="Практика">Практика</option>
                           <option value="Проектная работа">Проектная работа</option>
                         </select>
                       </div>
                     </>
+                  )}
+                  {step === 3 && (
+                    <label className="flex items-center gap-2 text-sm text-on-surface md:col-span-2">
+                      <input type="checkbox" name="is_active" checked={formData.is_active} onChange={e => setFormData(prev => ({ ...prev, is_active: e.target.checked }))} />
+                      Опубликовать вакансию сразу (активная)
+                    </label>
                   )}
 
                   {step === 2 && (
